@@ -105,6 +105,22 @@ def test_library_has_no_allocator_or_io_dependencies(built_profile):
     assert not symbols.intersection({"malloc","calloc","realloc","free","printf","puts","fopen","_sbrk"})
 
 
+@pytest.mark.parametrize("requested_version", ["0.0", "0.1.1", "1.0"])
+def test_incompatible_package_versions_are_rejected(built_profile, tmp_path, requested_version):
+    prefix=tmp_path/"installed"
+    run_checked(["cmake","--install",built_profile[1],"--prefix",prefix])
+    source=tmp_path/"consumer"; source.mkdir()
+    (source/"CMakeLists.txt").write_text(f'''cmake_minimum_required(VERSION 3.20)
+project(consumer LANGUAGES C)
+find_package(manipulator {requested_version} CONFIG REQUIRED)
+''')
+    result=subprocess.run(["cmake","-S",str(source),"-B",str(tmp_path/"build"),
+                           f"-DCMAKE_PREFIX_PATH={prefix}"],capture_output=True,text=True,timeout=30)
+    assert result.returncode!=0, "An incompatible development API version was accepted"
+    assert "0.1.0" in result.stderr
+    assert "not accepted" in result.stderr
+
+
 def test_invalid_profile_is_configuration_error(tmp_path):
     result=subprocess.run(["cmake","-S",str(ROOT),"-B",str(tmp_path/"bad"),"-DMK_REAL_TYPE=half"],
                           capture_output=True,text=True,timeout=30)

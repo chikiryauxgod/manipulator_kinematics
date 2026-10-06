@@ -85,8 +85,13 @@ install(EXPORT manipulatorTargets NAMESPACE manipulator:: DESTINATION ${CMAKE_IN
 configure_package_config_file(cmake/manipulatorConfig.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
+if(PROJECT_VERSION_MAJOR EQUAL 0)
+    set(MK_PACKAGE_COMPATIBILITY SameMinorVersion)
+else()
+    set(MK_PACKAGE_COMPATIBILITY SameMajorVersion)
+endif()
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
+    VERSION ${PROJECT_VERSION} COMPATIBILITY ${MK_PACKAGE_COMPATIBILITY})
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfigVersion.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
