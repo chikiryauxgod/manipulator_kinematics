@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import shutil
 import subprocess
 
 import pytest
@@ -31,22 +32,31 @@ def test_headers_are_self_contained(built_profile, tmp_path, language):
 
 
 @pytest.mark.parametrize("custom_dirs", [False, True])
-def test_relocated_install_and_external_consumers(built_profile, tmp_path, custom_dirs):
+def test_relocated_install_and_external_consumers(profile, tmp_path, custom_dirs):
+    library_source=tmp_path/"library source"
+    library_source.mkdir()
+    shutil.copy2(ROOT/"CMakeLists.txt",library_source/"CMakeLists.txt")
+    for directory in ("cmake", "include", "src"):
+        shutil.copytree(ROOT/directory,library_source/directory)
+    library_build=tmp_path/"library build"
+    configure=["cmake","-S",library_source,"-B",library_build,
+               f"-DMK_REAL_TYPE={profile}","-DCMAKE_BUILD_TYPE=Release"]
     if custom_dirs:
-        custom_build=tmp_path/"custom-build"
-        run_checked(["cmake","-S",ROOT,"-B",custom_build,
-                     f"-DMK_REAL_TYPE={built_profile[0]}","-DCMAKE_BUILD_TYPE=Release",
-                     "-DCMAKE_INSTALL_INCLUDEDIR=headers", "-DCMAKE_INSTALL_LIBDIR=libraries"])
-        run_checked(["cmake","--build",custom_build,"--parallel","2"])
-        built_profile=(built_profile[0], custom_build)
-    prefix=tmp_path/"installed"
-    run_checked(["cmake","--install",built_profile[1],"--prefix",prefix])
-    moved=tmp_path/"relocated"; prefix.rename(moved)
+        configure.extend(["-DCMAKE_INSTALL_INCLUDEDIR=headers", "-DCMAKE_INSTALL_LIBDIR=libraries"])
+    run_checked(configure)
+    run_checked(["cmake","--build",library_build,"--parallel","2"])
+    prefix=tmp_path/"install prefix"
+    run_checked(["cmake","--install",library_build,"--prefix",prefix])
+    moved=tmp_path/"relocated prefix"; prefix.rename(moved)
     for config in moved.rglob("*.cmake"):
         text=config.read_text()
         assert str(ROOT) not in text
-        assert str(built_profile[1]) not in text
-    source=tmp_path/"consumer"; source.mkdir()
+        assert str(library_source) not in text
+        assert str(library_build) not in text
+    # The package must work without either original source or build tree.
+    shutil.rmtree(library_source)
+    shutil.rmtree(library_build)
+    source=tmp_path/"consumer project"; source.mkdir()
     (source/"main.c").write_text(CONSUMER)
     (source/"main.cpp").write_text(CONSUMER)
     (source/"CMakeLists.txt").write_text('''cmake_minimum_required(VERSION 3.20)
@@ -60,7 +70,7 @@ set_target_properties(cpp_consumer PROPERTIES CXX_STANDARD 17)
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/consumers-$<CONFIG>.txt"
     CONTENT "$<TARGET_FILE:c_consumer>\\n$<TARGET_FILE:cpp_consumer>\\n")
 ''')
-    build=tmp_path/"consumer-build"
+    build=tmp_path/"consumer build"
     package_location=(f"-Dmanipulator_DIR={moved}/libraries/cmake/manipulator"
                       if custom_dirs else f"-DCMAKE_PREFIX_PATH={moved}")
     run_checked(["cmake","-S",source,"-B",build,"-DCMAKE_BUILD_TYPE=Release",package_location])
