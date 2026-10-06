@@ -10,7 +10,8 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--mode",choices=["host","embedded","all"],default="all")
 args=parser.parse_args()
 selected={"gcc-13","g++-13","cmake","ninja-build"}
-if args.mode in {"host","all"}: selected.update({"clang-18","libgtest-dev"})
+if args.mode in {"host","all"}:
+    selected.update({"clang-18","libclang-rt-18-dev","libgtest-dev"})
 if args.mode in {"embedded","all"}:
     selected.update({"gcc-arm-none-eabi","binutils-arm-none-eabi","libnewlib-arm-none-eabi",
                      "libnewlib-dev","qemu-system-arm"})
