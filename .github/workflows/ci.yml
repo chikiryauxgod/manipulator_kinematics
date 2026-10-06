@@ -1,0 +1,82 @@
+name: C11 kinematics
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [float, double]
+        compiler: [gcc, clang]
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Prepare locked dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3
+          python3 ci/install_dependencies.py --mode host
+      - name: Configure and run GoogleTest
+        shell: bash
+        run: |
+          if [ '${{ matrix.compiler }}' = gcc ]; then
+            c_compiler=gcc-13
+            cpp_compiler=g++-13
+          else
+            c_compiler=clang-18
+            cpp_compiler=clang++-18
+          fi
+          sanitizers=OFF
+          if [ '${{ matrix.compiler }}' = clang ] && [ '${{ matrix.config }}' = Debug ]; then
+            sanitizers=ON
+          fi
+          cmake -S . -B build-unit \
+            -DCMAKE_C_COMPILER="$c_compiler" -DCMAKE_CXX_COMPILER="$cpp_compiler" \
+            -DCMAKE_BUILD_TYPE='${{ matrix.config }}' -DMK_REAL_TYPE='${{ matrix.profile }}' \
+            -DMK_BUILD_UNIT_TESTS=ON -DMK_ENABLE_SANITIZERS="$sanitizers"
+          cmake --build build-unit --parallel 2
+          ctest --test-dir build-unit --output-on-failure
+          python3 ci/numerical_report.py build-unit/gtest-results > build-unit/numerical-results.txt
+      - name: Test stdin protocol with sanitizers in both profiles
+        if: matrix.compiler == 'clang' && matrix.config == 'Debug' && matrix.profile == 'double'
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: .venv/bin/python -m pytest tests/integration/test_forward_stream.py --sanitizers --basetemp=build-stream --junitxml=build-stream/results.xml -q
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: unit-${{ matrix.compiler }}-${{ matrix.profile }}-${{ matrix.config }}
+          path: |
+            build-unit/gtest-results/
+            build-unit/Testing/
+            build-unit/numerical-results.txt
+            build-stream/results.xml
+  integration-and-embedded:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Prepare locked dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3
+          python3 ci/install_dependencies.py --mode embedded
+      - name: Test CMake consumers, stdin protocol, and Cortex-M4
+        env:
+          CC: gcc-13
+          CXX: g++-13
+        run: .venv/bin/python -m pytest --embedded --basetemp=build-integration --junitxml=build-integration/results.xml -q
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: integration-and-embedded
+          path: |
+            build-integration/results.xml
+            build-integration/**/cross/*.elf
+            build-integration/**/cross/*.map
+            build-integration/**/cross/*.txt
+            build-integration/**/cross/**/*.su

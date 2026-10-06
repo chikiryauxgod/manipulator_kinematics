@@ -1,0 +1,143 @@
+from pathlib import Path
+import os
+import subprocess
+
+import pytest
+
+from conftest import ROOT, run_checked
+
+CC = os.environ.get("CC", "cc")
+CXX = os.environ.get("CXX", "c++")
+
+CONSUMER = '''#include <manipulator/forward.h>
+int main(void) {
+    mk_dh_joint joints[3] = {{MK_REVOLUTE,1,0,0,0}, {MK_REVOLUTE,2,0,0,0}, {MK_REVOLUTE,3,0,0,0}};
+    mk_real q[3] = {0,0,0}; mk_model model; mk_transform out;
+    if(mk_model_init(&model,joints,3)!=MK_OK) return 1;
+    if(mk_forward(&model,q,3,&out)!=MK_OK) return 2;
+    return out.m[0][3]==6 && out.m[1][3]==0 ? 0 : 3;
+}
+'''
+
+
+@pytest.mark.parametrize("language", ["c", "c++"])
+def test_headers_are_self_contained(built_profile, tmp_path, language):
+    for header in ["types", "transform", "model", "forward"]:
+        source=tmp_path/f"{header}.c"
+        source.write_text(f"#include <manipulator/{header}.h>\n")
+        run_checked([CC if language=="c" else CXX, "-x", language,
+                     "-std=c11" if language=="c" else "-std=c++17", "-pedantic-errors", "-fsyntax-only",
+                     "-I", ROOT/"include", "-I", built_profile[1]/"generated", source])
+
+
+@pytest.mark.parametrize("custom_dirs", [False, True])
+def test_relocated_install_and_external_consumers(built_profile, tmp_path, custom_dirs):
+    if custom_dirs:
+        custom_build=tmp_path/"custom-build"
+        run_checked(["cmake","-S",ROOT,"-B",custom_build,
+                     f"-DMK_REAL_TYPE={built_profile[0]}","-DCMAKE_BUILD_TYPE=Release",
+                     "-DCMAKE_INSTALL_INCLUDEDIR=headers", "-DCMAKE_INSTALL_LIBDIR=libraries"])
+        run_checked(["cmake","--build",custom_build,"--parallel","2"])
+        built_profile=(built_profile[0], custom_build)
+    prefix=tmp_path/"installed"
+    run_checked(["cmake","--install",built_profile[1],"--prefix",prefix])
+    moved=tmp_path/"relocated"; prefix.rename(moved)
+    for config in moved.rglob("*.cmake"):
+        text=config.read_text()
+        assert str(ROOT) not in text
+        assert str(built_profile[1]) not in text
+    source=tmp_path/"consumer"; source.mkdir()
+    (source/"main.c").write_text(CONSUMER)
+    (source/"main.cpp").write_text(CONSUMER)
+    (source/"CMakeLists.txt").write_text('''cmake_minimum_required(VERSION 3.20)
+project(consumer LANGUAGES C CXX)
+find_package(manipulator 0.1 CONFIG REQUIRED)
+add_executable(c_consumer main.c)
+add_executable(cpp_consumer main.cpp)
+target_link_libraries(c_consumer PRIVATE manipulator::kinematics)
+target_link_libraries(cpp_consumer PRIVATE manipulator::kinematics)
+set_target_properties(cpp_consumer PROPERTIES CXX_STANDARD 17)
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/consumers-$<CONFIG>.txt"
+    CONTENT "$<TARGET_FILE:c_consumer>\\n$<TARGET_FILE:cpp_consumer>\\n")
+''')
+    build=tmp_path/"consumer-build"
+    package_location=(f"-Dmanipulator_DIR={moved}/libraries/cmake/manipulator"
+                      if custom_dirs else f"-DCMAKE_PREFIX_PATH={moved}")
+    run_checked(["cmake","-S",source,"-B",build,"-DCMAKE_BUILD_TYPE=Release",package_location])
+    run_checked(["cmake","--build",build,"--config","Release","--parallel","2"])
+    for exe in (build/"consumers-Release.txt").read_text().splitlines(): run_checked([exe])
+
+
+def test_add_subdirectory_is_c_only(built_profile, tmp_path):
+    source=tmp_path/"parent"; source.mkdir()
+    (source/"main.c").write_text(CONSUMER)
+    # ROOT is inserted as a CMake bracket argument; no shell interpretation.
+    (source/"CMakeLists.txt").write_text(f'''cmake_minimum_required(VERSION 3.20)
+project(parent LANGUAGES C)
+set(MK_REAL_TYPE {built_profile[0]} CACHE STRING "" FORCE)
+add_subdirectory([[{ROOT}]] library)
+add_executable(consumer main.c)
+target_link_libraries(consumer PRIVATE manipulator::kinematics)
+file(GENERATE OUTPUT "${{CMAKE_BINARY_DIR}}/exe-$<CONFIG>.txt" CONTENT "$<TARGET_FILE:consumer>\\n")
+''')
+    build=tmp_path/"parent-build"
+    run_checked(["cmake","-S",source,"-B",build,"-DCMAKE_BUILD_TYPE=Release",
+                 "-DCMAKE_CXX_COMPILER=/does/not/exist"])
+    run_checked(["cmake","--build",build,"--parallel","2"])
+    run_checked([(build/"exe-Release.txt").read_text().strip()])
+    assert not list(build.rglob("manipulator_unit_tests"))
+
+
+def test_library_has_no_allocator_or_io_dependencies(built_profile):
+    library=next(built_profile[1].glob("libmanipulator_kinematics_*.a"))
+    result=run_checked(["nm","-u",library])
+    symbols={line.split()[-1] for line in result.stdout.splitlines() if " U " in line}
+    assert not symbols.intersection({"malloc","calloc","realloc","free","printf","puts","fopen","_sbrk"})
+
+
+def test_invalid_profile_is_configuration_error(tmp_path):
+    result=subprocess.run(["cmake","-S",str(ROOT),"-B",str(tmp_path/"bad"),"-DMK_REAL_TYPE=half"],
+                          capture_output=True,text=True,timeout=30)
+    assert result.returncode!=0
+    assert "must be float or double" in result.stderr
+
+
+@pytest.mark.parametrize("flag", ["-ffast-math", "-ffinite-math-only"])
+def test_fast_math_is_rejected(built_profile, tmp_path, flag):
+    result=subprocess.run([CC,"-std=c11",flag,"-I",str(ROOT/"include"),
+                           "-I",str(built_profile[1]/"generated"),"-c",str(ROOT/"src/transform.c"),
+                           "-o",str(tmp_path/"bad.o")], capture_output=True,text=True,timeout=30)
+    assert result.returncode!=0
+    assert "violates the numerical contract" in result.stderr
+
+
+def test_conflicting_config_is_rejected(built_profile, tmp_path):
+    source=tmp_path/"main.c"; source.write_text(CONSUMER)
+    override="0" if built_profile[0]=="float" else "1"
+    result=subprocess.run([CC,f"-DMK_USE_FLOAT={override}","-I",str(ROOT/"include"),
+                           "-I",str(built_profile[1]/"generated"),"-fsyntax-only",str(source)],
+                           capture_output=True,text=True,timeout=30)
+    assert result.returncode!=0
+    assert "conflicts with installed" in result.stderr
+
+
+def test_configurable_driver_limit(tmp_path):
+    build=tmp_path/"limited"
+    run_checked(["cmake","-S",ROOT,"-B",build,"-DMK_BUILD_TEST_DRIVER=ON",
+                 "-DMK_DRIVER_MAX_JOINTS=3","-DCMAKE_BUILD_TYPE=Release"])
+    run_checked(["cmake","--build",build,"--parallel","2"])
+    exe=Path((build/"driver-path-Release.txt").read_text().strip())
+    from test_forward_stream import request_line
+    result=subprocess.run([str(exe)],input=request_line([["R",0,0,0,0,0]]*4)+"\n",
+                          capture_output=True,text=True,timeout=5)
+    assert result.returncode==0 and result.stdout=="ERR REQUEST_TOO_LARGE\n"
+
+
+def test_multiconfig_driver_metadata(tmp_path):
+    build=tmp_path/"multiconfig"
+    run_checked(["cmake","-G","Ninja Multi-Config","-S",ROOT,"-B",build,"-DMK_BUILD_TEST_DRIVER=ON"])
+    run_checked(["cmake","--build",build,"--config","Release","--parallel","2"])
+    exe=Path((build/"driver-path-Release.txt").read_text().strip())
+    assert exe.is_file()
+    result=subprocess.run([str(exe)],input="",capture_output=True,text=True,timeout=5)
+    assert result.returncode==0 and result.stdout==""
