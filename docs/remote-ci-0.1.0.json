@@ -1,0 +1,162 @@
+{
+  "schema": 1,
+  "version": "0.1.0",
+  "source_commit": "15c4d8f2eb15cb4bd0a5abee4cabb51d581a167e",
+  "run_id": 38043984848,
+  "run_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848",
+  "workflow": "C11 kinematics",
+  "event": "push",
+  "status": "completed",
+  "conclusion": "success",
+  "created_at": "2026-10-10T10:10:30Z",
+  "updated_at": "2026-10-10T10:11:34Z",
+  "jobs": [
+    {
+      "id": 114189688917,
+      "name": "integration-and-embedded",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189688917",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689009,
+      "name": "host (float, clang, Release)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689009",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689082,
+      "name": "host (double, clang, Release)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689082",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689087,
+      "name": "host (double, gcc, Debug)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689087",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689135,
+      "name": "host (float, gcc, Release)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689135",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689143,
+      "name": "host (float, gcc, Debug)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689143",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689147,
+      "name": "host (float, clang, Debug)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689147",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689148,
+      "name": "host (double, gcc, Release)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689148",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 114189689154,
+      "name": "host (double, clang, Debug)",
+      "html_url": "https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848/job/114189689154",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11667730339,
+      "name": "unit-clang-double-Debug",
+      "size_in_bytes": 25107,
+      "expired": false
+    },
+    {
+      "id": 11667690440,
+      "name": "unit-gcc-double-Release",
+      "size_in_bytes": 23879,
+      "expired": false
+    },
+    {
+      "id": 11667615467,
+      "name": "unit-gcc-float-Release",
+      "size_in_bytes": 23902,
+      "expired": false
+    },
+    {
+      "id": 11667260873,
+      "name": "unit-clang-double-Release",
+      "size_in_bytes": 23919,
+      "expired": false
+    },
+    {
+      "id": 11667036228,
+      "name": "unit-gcc-double-Debug",
+      "size_in_bytes": 23918,
+      "expired": false
+    },
+    {
+      "id": 11667016405,
+      "name": "integration-and-embedded",
+      "size_in_bytes": 113053,
+      "expired": false
+    },
+    {
+      "id": 11666950930,
+      "name": "unit-clang-float-Release",
+      "size_in_bytes": 23890,
+      "expired": false
+    },
+    {
+      "id": 11666821106,
+      "name": "unit-gcc-float-Debug",
+      "size_in_bytes": 23914,
+      "expired": false
+    },
+    {
+      "id": 11666601281,
+      "name": "unit-clang-float-Debug",
+      "size_in_bytes": 23986,
+      "expired": false
+    }
+  ],
+  "license": "MIT",
+  "package_tests": {
+    "tests": 27,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "environment": "locked local container"
+  },
+  "packages": [
+    {
+      "profile": "double",
+      "abi": "f64",
+      "architecture": "linux-x86_64",
+      "compiler": "GCC 13.3.0",
+      "build_type": "Release",
+      "file": "manipulator-0.1.0-linux-x86_64-f64.tar.gz",
+      "sha256": "5cbe51e707201f81c5a13f01468ce6932fe3ab028dade144a0c99fa111332f74"
+    },
+    {
+      "profile": "float",
+      "abi": "f32",
+      "architecture": "linux-x86_64",
+      "compiler": "GCC 13.3.0",
+      "build_type": "Release",
+      "file": "manipulator-0.1.0-linux-x86_64-f32.tar.gz",
+      "sha256": "bf5ac286ffe231b5ffeb56e9597cbec32aa921997e2d98734e08824d9affdbeb"
+    }
+  ]
+}
