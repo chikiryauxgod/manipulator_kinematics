@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "version": "0.1.0",
+  "source_commit": "080b1d4b9140c7cd9d7abe92b47adbfe0a69bc04",
+  "scope": "clean-git-archive-in-locked-local-container",
+  "status": "passed",
+  "ubuntu_image": "ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55",
+  "prepared_image_id": "sha256:c204332a217352a290dd98c3a3caea639e2052eadc3eb40e5c22050d082a8969",
+  "unit_builds": [
+    {
+      "compiler": "gcc",
+      "profile": "double",
+      "config": "Debug",
+      "tests": 35,
+      "sanitizers": false
+    },
+    {
+      "compiler": "gcc",
+      "profile": "double",
+      "config": "Release",
+      "tests": 35,
+      "sanitizers": false
+    },
+    {
+      "compiler": "gcc",
+      "profile": "float",
+      "config": "Debug",
+      "tests": 35,
+      "sanitizers": false
+    },
+    {
+      "compiler": "gcc",
+      "profile": "float",
+      "config": "Release",
+      "tests": 35,
+      "sanitizers": false
+    },
+    {
+      "compiler": "clang",
+      "profile": "double",
+      "config": "Debug",
+      "tests": 35,
+      "sanitizers": true
+    },
+    {
+      "compiler": "clang",
+      "profile": "double",
+      "config": "Release",
+      "tests": 35,
+      "sanitizers": false
+    },
+    {
+      "compiler": "clang",
+      "profile": "float",
+      "config": "Debug",
+      "tests": 35,
+      "sanitizers": true
+    },
+    {
+      "compiler": "clang",
+      "profile": "float",
+      "config": "Release",
+      "tests": 35,
+      "sanitizers": false
+    }
+  ],
+  "integration": {
+    "tests": 137,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "stream": {
+    "tests": 106,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "numerical_metrics": {
+    "double": {
+      "gcc": {
+        "max_position_error": 2.4531592035526018e-14,
+        "max_rotation_error": 1.5646121551138314e-15
+      },
+      "clang": {
+        "max_position_error": 2.4531592035526018e-14,
+        "max_rotation_error": 1.5646121551138314e-15
+      }
+    },
+    "float": {
+      "gcc": {
+        "max_position_error": 2.170818821222364e-05,
+        "max_rotation_error": 9.669948531228732e-07
+      },
+      "clang": {
+        "max_position_error": 2.170818821222364e-05,
+        "max_rotation_error": 9.669948531228732e-07
+      }
+    }
+  },
+  "embedded": {
+    "target": "Cortex-M4 MPS2 AN386",
+    "float_abi": "soft",
+    "double": {
+      "stack_n3_n6_n64": [
+        1532,
+        1532,
+        1532
+      ],
+      "text": 17424,
+      "data": 0,
+      "bss": 19968
+    },
+    "float": {
+      "stack_n3_n6_n64": [
+        768,
+        768,
+        768
+      ],
+      "text": 13800,
+      "data": 0,
+      "bss": 9984
+    }
+  },
+  "internal_packages": [
+    {
+      "profile": "double",
+      "abi": "f64",
+      "architecture": "linux-x86_64",
+      "compiler": "GCC 13.3.0",
+      "build_type": "Release",
+      "file": "manipulator-0.1.0-linux-x86_64-f64.tar.gz",
+      "sha256": "f2894b78e41de4ebdcf00f807fdb4a374d4bd42be4fe83c4e25ae9b792a80e4a",
+      "c_consumer_verified": true,
+      "cpp_consumer_verified": true
+    },
+    {
+      "profile": "float",
+      "abi": "f32",
+      "architecture": "linux-x86_64",
+      "compiler": "GCC 13.3.0",
+      "build_type": "Release",
+      "file": "manipulator-0.1.0-linux-x86_64-f32.tar.gz",
+      "sha256": "40aed76e11673da967b0b94030b6886e1fb65367e07392b013217f9aa8bf73bd",
+      "c_consumer_verified": true,
+      "cpp_consumer_verified": true
+    }
+  ],
+  "remote_ci_verified": false,
+  "real_hardware_verified": false,
+  "license_selected": false
+}

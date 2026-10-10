@@ -52,9 +52,9 @@ python3 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-pytest сам собирает потоковый C11-бинарник для float/double и отправляет ему запросы в stdin. Для обязательной embedded-проверки установите Arm GNU toolchain/newlib, QEMU и Ninja, затем запустите `.venv/bin/python -m pytest --embedded -q`. [Инструкция Cortex-M4](tests/embedded/README.md) и [подготовка CI](ci/README.md) описывают окружение.
+pytest сам собирает потоковый C11-бинарник для float/double и отправляет ему запросы в stdin. [Протокол и ручной запуск драйвера](tests/driver/README.md) описаны отдельно. Для обязательной embedded-проверки установите Arm GNU toolchain/newlib, QEMU и Ninja, затем запустите `.venv/bin/python -m pytest --embedded -q`. [Инструкция Cortex-M4](tests/embedded/README.md) и [подготовка CI](ci/README.md) описывают окружение.
 
-Локально прошли 35 GoogleTest-тестов в каждой из восьми комбинаций GCC/Clang × Debug/Release × float/double, 131 интеграционных проверок с QEMU и 106 потоковых проверок с ASan/UBSan. Результаты, измеренная память и границы этих проверок — в [отчёте валидации](docs/validation.md). Удалённый workflow ещё не запускался.
+Локально прошли 35 GoogleTest-тестов в каждой из восьми комбинаций GCC/Clang × Debug/Release × float/double, 137 интеграционных проверок с QEMU и 106 потоковых проверок с ASan/UBSan. Результаты, измеренная память и границы этих проверок — в [отчёте валидации](docs/validation.md). Удалённый workflow ещё не запускался.
 
 ## Документы
 
