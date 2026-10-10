@@ -13,14 +13,14 @@ typedef enum {
     MK_NONFINITE_INPUT = 5, MK_NUMERIC_ERROR = 6, MK_INVALID_TRANSFORM = 7
 } mk_status;
 typedef enum { MK_REVOLUTE = 0, MK_PRISMATIC = 1 } mk_joint_type;
-/* Row-major; maps column vectors from child coordinates to parent coordinates. */
+
 typedef struct { mk_real m[4][4]; } mk_transform;
-/* Standard DH: Rz(theta) Tz(d) Tx(a) Rx(alpha). Lengths in m, angles in rad. */
+
 typedef struct {
     mk_joint_type type;
     mk_real a, alpha, d_offset, theta_offset;
 } mk_dh_joint;
-/* Borrows joints; caller keeps the array alive and immutable during calls. */
+
 typedef struct {
     const mk_dh_joint *joints;
     size_t joint_count;

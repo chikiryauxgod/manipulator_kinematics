@@ -12,8 +12,7 @@
 #define MK_DRIVER_MAX_JOINTS 64
 #endif
 #define LINE_LIMIT 65536u
-/* Host-only protocol buffers. Never part of the mathematical library. */
-/* Extra byte distinguishes an allowed CRLF terminator from oversized content. */
+
 static char line_buffer[LINE_LIMIT + 2];
 static mk_dh_joint joints[MK_DRIVER_MAX_JOINTS];
 static mk_real coordinates[MK_DRIVER_MAX_JOINTS];

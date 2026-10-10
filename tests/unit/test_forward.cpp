@@ -54,8 +54,6 @@ TEST_P(Family, SpatialGeometryAgainstIndependentTrigonometry)
 }
 INSTANTIATE_TEST_SUITE_P(Sizes,Family,testing::Values(1,3,4,5,6,7,16,64));
 
-/* Geometric reference: track world-space basis vectors, rotate about local
- * axes, and translate along them. It does not construct/multiply DH matrices. */
 using Vec = std::array<long double,3>;
 static Vec combination(const Vec &a,long double x,const Vec &b,long double y)
 { return {a[0]*x+b[0]*y,a[1]*x+b[1]*y,a[2]*x+b[2]*y}; }
@@ -81,7 +79,7 @@ TEST_P(Family, GeneralMixedSpatialGeometryAndFrames)
         Vec x{0,1,0},y{-1,0,0},z{0,0,1},p{1.25L,-2,3};
         long double scale=1.25L+2+3+2+1+0.5L;
         for(size_t i=0;i<n;++i) {
-            // Keep the reference additions and trigonometry in higher precision.
+
             long double theta=js[i].theta_offset,d=js[i].d_offset;
             if(js[i].type==MK_REVOLUTE) theta+=q[i]; else d+=q[i];
             const long double c=std::cos(theta),s=std::sin(theta);

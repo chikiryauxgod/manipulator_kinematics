@@ -58,7 +58,6 @@ def test_relocated_install_and_external_consumers(profile, tmp_path, custom_dirs
         assert str(ROOT) not in text
         assert str(library_source) not in text
         assert str(library_build) not in text
-    # The package must work without either original source or build tree.
     shutil.rmtree(library_source)
     shutil.rmtree(library_build)
     source=tmp_path/"consumer project"; source.mkdir()
@@ -86,7 +85,6 @@ file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/consumers-$<CONFIG>.txt"
 def test_add_subdirectory_is_c_only(built_profile, tmp_path):
     source=tmp_path/"parent"; source.mkdir()
     (source/"main.c").write_text(CONSUMER)
-    # ROOT is inserted as a CMake bracket argument; no shell interpretation.
     (source/"CMakeLists.txt").write_text(f'''cmake_minimum_required(VERSION 3.20)
 project(parent LANGUAGES C)
 set(MK_REAL_TYPE {built_profile[0]} CACHE STRING "" FORCE)

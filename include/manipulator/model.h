@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Borrows joints, sets identity base/tool; leaves out unchanged on error. */
+
 mk_status mk_model_init(mk_model *out, const mk_dh_joint *joints, size_t joint_count);
 mk_status mk_model_validate(const mk_model *model);
 #ifdef __cplusplus

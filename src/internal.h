@@ -43,7 +43,7 @@ static inline int mk_count_valid(size_t n)
         && n <= SIZE_MAX / sizeof(mk_real) && n <= SIZE_MAX - 2
         && n + 2 <= SIZE_MAX / sizeof(mk_transform);
 }
-/* Internal symbols are not part of the public API. */
+
 mk_status mk_internal_compose(const mk_transform *a, const mk_transform *b, mk_transform *out);
 mk_status mk_internal_joints_validate(const mk_dh_joint *joints, size_t n);
 mk_status mk_internal_dh(const mk_dh_joint *joint, mk_real q, mk_transform *out);

@@ -4,7 +4,7 @@ int main(void);
 void smoke_exit(int code);
 void Reset_Handler(void);
 void Fault_Handler(void) { smoke_exit(99); }
-/* Integer vector entries are target-specific adapter code, never core C11. */
+
 __attribute__((section(".vectors"), used))
 const uintptr_t vectors[16] = {
     (uintptr_t)&_stack_top, (uintptr_t)Reset_Handler,

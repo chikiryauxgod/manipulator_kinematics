@@ -42,7 +42,6 @@ def built_profile(profile, tmp_path_factory, request):
 def driver(request, profile):
     supplied = request.config.getoption("--driver-path")
     if supplied:
-        # Explicitly select the supplied binary's profile; other parameter is not run.
         if profile != request.config.getoption("--profile"):
             pytest.skip("Only the supplied driver's selected profile")
         path=Path(supplied).resolve()

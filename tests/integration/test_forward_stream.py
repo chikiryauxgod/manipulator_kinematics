@@ -125,7 +125,6 @@ def test_corruption_and_recovery(driver, kind):
     good = request_line()
     bad = {"nul":good+"\0", "nonascii":good+"\x80", "long":"x"*65537,
            "extra":good+" 9", "truncated":" ".join(good.split()[:-1]), "carriage":good+"\r"}[kind]
-    # The carriage case places CR inside the line, not the CRLF terminator.
     if kind == "carriage": bad += " x"
     lines = execute(driver, bad+"\n"+good+"\n")
     assert lines[0] == ("ERR REQUEST_TOO_LARGE" if kind=="long" else "ERR PARSE_ERROR")
