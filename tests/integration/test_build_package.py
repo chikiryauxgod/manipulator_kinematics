@@ -38,16 +38,21 @@ def test_relocated_install_and_external_consumers(profile, tmp_path, custom_dirs
     shutil.copy2(ROOT/"CMakeLists.txt",library_source/"CMakeLists.txt")
     for directory in ("cmake", "include", "src"):
         shutil.copytree(ROOT/directory,library_source/directory)
+    license_notice=(ROOT/"LICENSE").read_text()
+    (library_source/"LICENSE").write_text(license_notice)
     library_build=tmp_path/"library build"
     configure=["cmake","-S",library_source,"-B",library_build,
                f"-DMK_REAL_TYPE={profile}","-DCMAKE_BUILD_TYPE=Release"]
     if custom_dirs:
-        configure.extend(["-DCMAKE_INSTALL_INCLUDEDIR=headers", "-DCMAKE_INSTALL_LIBDIR=libraries"])
+        configure.extend(["-DCMAKE_INSTALL_INCLUDEDIR=headers", "-DCMAKE_INSTALL_LIBDIR=libraries",
+                          "-DCMAKE_INSTALL_DOCDIR=manuals/manipulator"])
     run_checked(configure)
     run_checked(["cmake","--build",library_build,"--parallel","2"])
     prefix=tmp_path/"install prefix"
     run_checked(["cmake","--install",library_build,"--prefix",prefix])
     moved=tmp_path/"relocated prefix"; prefix.rename(moved)
+    docdir="manuals/manipulator" if custom_dirs else "share/doc/manipulator"
+    assert (moved/docdir/"LICENSE").read_text()==license_notice
     for config in moved.rglob("*.cmake"):
         text=config.read_text()
         assert str(ROOT) not in text

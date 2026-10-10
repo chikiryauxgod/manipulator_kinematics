@@ -7,3 +7,15 @@ Workflow выполняет восемь host-комбинаций GCC/Clang × 
 При удалении закреплённого выпуска из apt-репозитория подготовка окружения должна завершиться ошибкой. Версии обновляются явным изменением lock и повторным прогоном всех проверок. ОС runtime-зависимости базового контейнера и непрямые apt-зависимости не являются полностью герметичным архивом пакетов; для долгосрочного воспроизведения следует сохранить успешный подготовленный образ в выбранном registry.
 
 Локально достаточно установленных CMake, GCC/Clang, GoogleTest 1.14+, Python и pytest из requirements. Полный интеграционный набор требует Ninja для проверки multi-config генератора. Embedded-job дополнительно требует arm-none-eabi-gcc с newlib и qemu-system-arm. Если они распакованы без системной установки, укажите MK_ARM_TOOLCHAIN_DIR и MK_QEMU_PATH; runtime-зависимости QEMU должны разрешаться средой.
+
+## Удалённый запуск
+
+Remote настраивает владелец проекта. После настройки origin отправьте ветку:
+
+```sh
+git push -u origin feature/project_init
+```
+
+Это автоматически запускает workflow C11 kinematics. В GitHub откройте Actions и проверьте все восемь host jobs и integration-and-embedded; результаты должны относиться к отправленному commit. Ручной запуск через Run workflow доступен, когда файл workflow присутствует в default branch репозитория, согласно [инструкции GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow). Если push уже запустил проверки, повторный ручной запуск не нужен.
+
+Успешный локальный Docker-прогон не считается удалённым запуском GitHub Actions. До его завершения этап 7 Roadmap остаётся открытым.

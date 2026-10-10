@@ -81,6 +81,9 @@ include(CMakePackageConfigHelpers)
 install(TARGETS manipulator_kinematics EXPORT manipulatorTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/manipulator DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/manipulator/config.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/manipulator)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION ${CMAKE_INSTALL_DOCDIR})
+endif()
 install(EXPORT manipulatorTargets NAMESPACE manipulator:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
 configure_package_config_file(cmake/manipulatorConfig.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
