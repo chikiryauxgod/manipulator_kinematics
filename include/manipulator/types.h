@@ -2,28 +2,28 @@
 #define MANIPULATOR_TYPES_H
 #include <stddef.h>
 #include <manipulator/config.h>
-#if MK_USE_FLOAT
-typedef float mk_real;
+#if MANIPULATOR_USE_FLOAT
+typedef float manipulator_real;
 #else
-typedef double mk_real;
+typedef double manipulator_real;
 #endif
 typedef enum {
-    MK_OK = 0, MK_INVALID_ARGUMENT = 1, MK_INVALID_MODEL = 2,
-    MK_SIZE_MISMATCH = 3, MK_BUFFER_TOO_SMALL = 4,
-    MK_NONFINITE_INPUT = 5, MK_NUMERIC_ERROR = 6, MK_INVALID_TRANSFORM = 7
-} mk_status;
-typedef enum { MK_REVOLUTE = 0, MK_PRISMATIC = 1 } mk_joint_type;
+    MANIPULATOR_OK = 0, MANIPULATOR_INVALID_ARGUMENT = 1, MANIPULATOR_INVALID_MODEL = 2,
+    MANIPULATOR_SIZE_MISMATCH = 3, MANIPULATOR_BUFFER_TOO_SMALL = 4,
+    MANIPULATOR_NONFINITE_INPUT = 5, MANIPULATOR_NUMERIC_ERROR = 6, MANIPULATOR_INVALID_TRANSFORM = 7
+} manipulator_status;
+typedef enum { MANIPULATOR_REVOLUTE = 0, MANIPULATOR_PRISMATIC = 1 } manipulator_joint_type;
 
-typedef struct { mk_real m[4][4]; } mk_transform;
-
-typedef struct {
-    mk_joint_type type;
-    mk_real a, alpha, d_offset, theta_offset;
-} mk_dh_joint;
+typedef struct { manipulator_real m[4][4]; } manipulator_transform;
 
 typedef struct {
-    const mk_dh_joint *joints;
+    manipulator_joint_type type;
+    manipulator_real a, alpha, d_offset, theta_offset;
+} manipulator_dh_joint;
+
+typedef struct {
+    const manipulator_dh_joint *joints;
     size_t joint_count;
-    mk_transform world_base, last_tool;
-} mk_model;
+    manipulator_transform world_base, last_tool;
+} manipulator_model;
 #endif

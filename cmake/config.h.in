@@ -1,30 +1,30 @@
 #ifndef MANIPULATOR_CONFIG_H
 #define MANIPULATOR_CONFIG_H
-#if defined(MK_USE_FLOAT) && MK_USE_FLOAT != @MK_USE_FLOAT@
-#error "MK_USE_FLOAT conflicts with installed arithmetic profile"
+#if defined(MANIPULATOR_USE_FLOAT) && MANIPULATOR_USE_FLOAT != @MANIPULATOR_USE_FLOAT@
+#error "MANIPULATOR_USE_FLOAT conflicts with installed arithmetic profile"
 #endif
-#ifndef MK_USE_FLOAT
-#define MK_USE_FLOAT @MK_USE_FLOAT@
+#ifndef MANIPULATOR_USE_FLOAT
+#define MANIPULATOR_USE_FLOAT @MANIPULATOR_USE_FLOAT@
 #endif
-#define MK_VERSION_MAJOR 0
-#define MK_VERSION_MINOR 1
-#define MK_VERSION_PATCH 0
-#define MK_ABI_VERSION 1
-#if MK_USE_FLOAT
-#define mk_model_init mk_v1_f32_model_init
-#define mk_model_validate mk_v1_f32_model_validate
-#define mk_transform_identity mk_v1_f32_transform_identity
-#define mk_transform_validate mk_v1_f32_transform_validate
-#define mk_transform_compose mk_v1_f32_transform_compose
-#define mk_forward mk_v1_f32_forward
-#define mk_forward_frames mk_v1_f32_forward_frames
+#define MANIPULATOR_VERSION_MAJOR 0
+#define MANIPULATOR_VERSION_MINOR 1
+#define MANIPULATOR_VERSION_PATCH 0
+#define MANIPULATOR_ABI_VERSION 1
+#if MANIPULATOR_USE_FLOAT
+#define manipulator_model_init manipulator_v1_f32_model_init
+#define manipulator_model_validate manipulator_v1_f32_model_validate
+#define manipulator_transform_identity manipulator_v1_f32_transform_identity
+#define manipulator_transform_validate manipulator_v1_f32_transform_validate
+#define manipulator_transform_compose manipulator_v1_f32_transform_compose
+#define manipulator_forward manipulator_v1_f32_forward
+#define manipulator_forward_frames manipulator_v1_f32_forward_frames
 #else
-#define mk_model_init mk_v1_f64_model_init
-#define mk_model_validate mk_v1_f64_model_validate
-#define mk_transform_identity mk_v1_f64_transform_identity
-#define mk_transform_validate mk_v1_f64_transform_validate
-#define mk_transform_compose mk_v1_f64_transform_compose
-#define mk_forward mk_v1_f64_forward
-#define mk_forward_frames mk_v1_f64_forward_frames
+#define manipulator_model_init manipulator_v1_f64_model_init
+#define manipulator_model_validate manipulator_v1_f64_model_validate
+#define manipulator_transform_identity manipulator_v1_f64_transform_identity
+#define manipulator_transform_validate manipulator_v1_f64_transform_validate
+#define manipulator_transform_compose manipulator_v1_f64_transform_compose
+#define manipulator_forward manipulator_v1_f64_forward
+#define manipulator_forward_frames manipulator_v1_f64_forward_frames
 #endif
 #endif

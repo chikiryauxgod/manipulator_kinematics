@@ -2,10 +2,10 @@
 
 ## Сборка и пример
 
-Нужны CMake 3.20+, C11-компилятор и математический runtime. По умолчанию используется double; для float задайте `-DMK_REAL_TYPE=float` в отдельном каталоге сборки.
+Нужны CMake 3.20+, C11-компилятор и математический runtime. По умолчанию используется double; для float задайте `-DMANIPULATOR_REAL_TYPE=float` в отдельном каталоге сборки.
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMK_BUILD_EXAMPLES=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMANIPULATOR_BUILD_EXAMPLES=ON
 cmake --build build
 ./build/manipulator_example
 ```
@@ -40,7 +40,7 @@ GoogleTest 1.14+ нужен только для unit-тестов; Python, pytes
 
 ```sh
 cmake -S . -B build-tests -DCMAKE_BUILD_TYPE=Debug \
-  -DMK_BUILD_UNIT_TESTS=ON -DMK_BUILD_TEST_DRIVER=ON
+  -DMANIPULATOR_BUILD_UNIT_TESTS=ON -DMANIPULATOR_BUILD_TEST_DRIVER=ON
 cmake --build build-tests
 ctest --test-dir build-tests --output-on-failure
 python3 -m venv .venv

@@ -8,14 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef MK_DRIVER_MAX_JOINTS
-#define MK_DRIVER_MAX_JOINTS 64
+#ifndef MANIPULATOR_DRIVER_MAX_JOINTS
+#define MANIPULATOR_DRIVER_MAX_JOINTS 64
 #endif
 #define LINE_LIMIT 65536u
 
 static char line_buffer[LINE_LIMIT + 2];
-static mk_dh_joint joints[MK_DRIVER_MAX_JOINTS];
-static mk_real coordinates[MK_DRIVER_MAX_JOINTS];
+static manipulator_dh_joint joints[MANIPULATOR_DRIVER_MAX_JOINTS];
+static manipulator_real coordinates[MANIPULATOR_DRIVER_MAX_JOINTS];
 
 static char *token(char **cursor)
 {
@@ -29,12 +29,12 @@ static char *token(char **cursor)
     return start;
 }
 static int digit(char c) { return c >= '0' && c <= '9'; }
-static const char *parse_real(char *text, mk_real *out)
+static const char *parse_real(char *text, manipulator_real *out)
 {
     if (!text) return "PARSE_ERROR";
-    if (strcmp(text,"nan")==0) { *out=(mk_real)NAN; return NULL; }
-    if (strcmp(text,"inf")==0 || strcmp(text,"+inf")==0) { *out=(mk_real)INFINITY; return NULL; }
-    if (strcmp(text,"-inf")==0) { *out=-(mk_real)INFINITY; return NULL; }
+    if (strcmp(text,"nan")==0) { *out=(manipulator_real)NAN; return NULL; }
+    if (strcmp(text,"inf")==0 || strcmp(text,"+inf")==0) { *out=(manipulator_real)INFINITY; return NULL; }
+    if (strcmp(text,"-inf")==0) { *out=-(manipulator_real)INFINITY; return NULL; }
     const char *p=text;
     if (*p=='+' || *p=='-') ++p;
     size_t digits=0;
@@ -53,10 +53,10 @@ static const char *parse_real(char *text, mk_real *out)
     if (*p) return "PARSE_ERROR";
     char *end=NULL;
     errno=0;
-#if MK_USE_FLOAT
-    mk_real value=strtof(text,&end);
+#if MANIPULATOR_USE_FLOAT
+    manipulator_real value=strtof(text,&end);
 #else
-    mk_real value=strtod(text,&end);
+    manipulator_real value=strtod(text,&end);
 #endif
     if (errno==ERANGE || !isfinite(value)) return "NUMBER_RANGE_ERROR";
     if (end==text || *end) return "PARSE_ERROR";
@@ -73,25 +73,25 @@ static const char *parse_count(char *text, size_t *out)
         if (n > (SIZE_MAX-d)/10) return "REQUEST_TOO_LARGE";
         n=n*10+d;
     }
-    if (n>MK_DRIVER_MAX_JOINTS) return "REQUEST_TOO_LARGE";
+    if (n>MANIPULATOR_DRIVER_MAX_JOINTS) return "REQUEST_TOO_LARGE";
     *out=n;
     return NULL;
 }
-static const char *status_name(mk_status status)
+static const char *status_name(manipulator_status status)
 {
     switch (status) {
-    case MK_OK: return "MK_OK";
-    case MK_INVALID_ARGUMENT: return "MK_INVALID_ARGUMENT";
-    case MK_INVALID_MODEL: return "MK_INVALID_MODEL";
-    case MK_SIZE_MISMATCH: return "MK_SIZE_MISMATCH";
-    case MK_BUFFER_TOO_SMALL: return "MK_BUFFER_TOO_SMALL";
-    case MK_NONFINITE_INPUT: return "MK_NONFINITE_INPUT";
-    case MK_NUMERIC_ERROR: return "MK_NUMERIC_ERROR";
-    case MK_INVALID_TRANSFORM: return "MK_INVALID_TRANSFORM";
+    case MANIPULATOR_OK: return "MANIPULATOR_OK";
+    case MANIPULATOR_INVALID_ARGUMENT: return "MANIPULATOR_INVALID_ARGUMENT";
+    case MANIPULATOR_INVALID_MODEL: return "MANIPULATOR_INVALID_MODEL";
+    case MANIPULATOR_SIZE_MISMATCH: return "MANIPULATOR_SIZE_MISMATCH";
+    case MANIPULATOR_BUFFER_TOO_SMALL: return "MANIPULATOR_BUFFER_TOO_SMALL";
+    case MANIPULATOR_NONFINITE_INPUT: return "MANIPULATOR_NONFINITE_INPUT";
+    case MANIPULATOR_NUMERIC_ERROR: return "MANIPULATOR_NUMERIC_ERROR";
+    case MANIPULATOR_INVALID_TRANSFORM: return "MANIPULATOR_INVALID_TRANSFORM";
     }
     return "INTERNAL_ERROR";
 }
-static const char *request(char *line, mk_transform *result)
+static const char *request(char *line, manipulator_transform *result)
 {
     char *cursor=line;
     char *command=token(&cursor);
@@ -102,18 +102,18 @@ static const char *request(char *line, mk_transform *result)
     for (size_t i=0; i<n; ++i) {
         char *type=token(&cursor);
         if (!type) return "PARSE_ERROR";
-        if (strcmp(type,"R")==0) joints[i].type=MK_REVOLUTE;
-        else if (strcmp(type,"P")==0) joints[i].type=MK_PRISMATIC;
+        if (strcmp(type,"R")==0) joints[i].type=MANIPULATOR_REVOLUTE;
+        else if (strcmp(type,"P")==0) joints[i].type=MANIPULATOR_PRISMATIC;
         else return "PARSE_ERROR";
-        mk_real *fields[]={&joints[i].a,&joints[i].alpha,&joints[i].d_offset,
+        manipulator_real *fields[]={&joints[i].a,&joints[i].alpha,&joints[i].d_offset,
                           &joints[i].theta_offset,&coordinates[i]};
         for (size_t f=0; f<5; ++f) {
             error=parse_real(token(&cursor),fields[f]);
             if (error) return error;
         }
     }
-    mk_transform base, tool;
-    mk_transform *matrices[]={&base,&tool};
+    manipulator_transform base, tool;
+    manipulator_transform *matrices[]={&base,&tool};
     for (size_t t=0; t<2; ++t)
         for (size_t i=0; i<4; ++i)
             for (size_t j=0; j<4; ++j) {
@@ -121,12 +121,12 @@ static const char *request(char *line, mk_transform *result)
                 if (error) return error;
             }
     if (token(&cursor)) return "PARSE_ERROR";
-    mk_model model;
-    mk_status status=mk_model_init(&model,joints,n);
-    if (status!=MK_OK) return status_name(status);
+    manipulator_model model;
+    manipulator_status status=manipulator_model_init(&model,joints,n);
+    if (status!=MANIPULATOR_OK) return status_name(status);
     model.world_base=base; model.last_tool=tool;
-    status=mk_forward(&model,coordinates,n,result);
-    return status==MK_OK ? NULL : status_name(status);
+    status=manipulator_forward(&model,coordinates,n,result);
+    return status==MANIPULATOR_OK ? NULL : status_name(status);
 }
 static int respond(size_t length, int too_long, int bad_byte, int has_lf)
 {
@@ -134,13 +134,13 @@ static int respond(size_t length, int too_long, int bad_byte, int has_lf)
     if (length>LINE_LIMIT) too_long=1;
     line_buffer[length]='\0';
     if (memchr(line_buffer,'\r',length)) bad_byte=1;
-    mk_transform out;
+    manipulator_transform out;
     const char *error=too_long ? "REQUEST_TOO_LARGE" : bad_byte ? "PARSE_ERROR" : request(line_buffer,&out);
     if (error) {
         if (printf("ERR %s\n",error)<0) return 0;
     } else {
         if (printf("OK")<0) return 0;
-#if MK_USE_FLOAT
+#if MANIPULATOR_USE_FLOAT
         const int precision=FLT_DECIMAL_DIG;
 #else
         const int precision=DBL_DECIMAL_DIG;

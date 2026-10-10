@@ -1,38 +1,38 @@
 #include <manipulator/model.h>
 #include "internal.h"
 
-mk_status mk_internal_joints_validate(const mk_dh_joint *joints, size_t n)
+manipulator_status manipulator_internal_joints_validate(const manipulator_dh_joint *joints, size_t n)
 {
-    if (!joints) return MK_INVALID_ARGUMENT;
-    if (!mk_count_valid(n)) return MK_INVALID_MODEL;
+    if (!joints) return MANIPULATOR_INVALID_ARGUMENT;
+    if (!manipulator_count_valid(n)) return MANIPULATOR_INVALID_MODEL;
     for (size_t i = 0; i < n; ++i) {
-        const mk_dh_joint *j = &joints[i];
-        if (j->type != MK_REVOLUTE && j->type != MK_PRISMATIC) return MK_INVALID_MODEL;
+        const manipulator_dh_joint *j = &joints[i];
+        if (j->type != MANIPULATOR_REVOLUTE && j->type != MANIPULATOR_PRISMATIC) return MANIPULATOR_INVALID_MODEL;
         if (!isfinite(j->a) || !isfinite(j->alpha) || !isfinite(j->d_offset)
-            || !isfinite(j->theta_offset)) return MK_NONFINITE_INPUT;
+            || !isfinite(j->theta_offset)) return MANIPULATOR_NONFINITE_INPUT;
     }
-    return MK_OK;
+    return MANIPULATOR_OK;
 }
 
-mk_status mk_model_validate(const mk_model *model)
+manipulator_status manipulator_model_validate(const manipulator_model *model)
 {
-    if (!model) return MK_INVALID_ARGUMENT;
-    mk_status status = mk_internal_joints_validate(model->joints, model->joint_count);
-    if (status != MK_OK) return status;
-    status = mk_transform_validate(&model->world_base);
-    return status != MK_OK ? status : mk_transform_validate(&model->last_tool);
+    if (!model) return MANIPULATOR_INVALID_ARGUMENT;
+    manipulator_status status = manipulator_internal_joints_validate(model->joints, model->joint_count);
+    if (status != MANIPULATOR_OK) return status;
+    status = manipulator_transform_validate(&model->world_base);
+    return status != MANIPULATOR_OK ? status : manipulator_transform_validate(&model->last_tool);
 }
 
-mk_status mk_model_init(mk_model *out, const mk_dh_joint *joints, size_t n)
+manipulator_status manipulator_model_init(manipulator_model *out, const manipulator_dh_joint *joints, size_t n)
 {
-    if (!out) return MK_INVALID_ARGUMENT;
-    mk_status status = mk_internal_joints_validate(joints, n);
-    if (status != MK_OK) return status;
-    mk_model result;
+    if (!out) return MANIPULATOR_INVALID_ARGUMENT;
+    manipulator_status status = manipulator_internal_joints_validate(joints, n);
+    if (status != MANIPULATOR_OK) return status;
+    manipulator_model result;
     result.joints = joints;
     result.joint_count = n;
-    (void)mk_transform_identity(&result.world_base);
-    (void)mk_transform_identity(&result.last_tool);
+    (void)manipulator_transform_identity(&result.world_base);
+    (void)manipulator_transform_identity(&result.last_tool);
     *out = result;
-    return MK_OK;
+    return MANIPULATOR_OK;
 }

@@ -5,12 +5,12 @@
 extern "C" {
 #endif
 
-mk_status mk_forward(const mk_model *model, const mk_real *q, size_t q_count,
-                     mk_transform *world_tool);
+manipulator_status manipulator_forward(const manipulator_model *model, const manipulator_real *q, size_t q_count,
+                     manipulator_transform *world_tool);
 
-mk_status mk_forward_frames(const mk_model *model, const mk_real *q, size_t q_count,
-                            mk_transform *frames, size_t frame_capacity,
-                            mk_transform *workspace, size_t workspace_capacity);
+manipulator_status manipulator_forward_frames(const manipulator_model *model, const manipulator_real *q, size_t q_count,
+                            manipulator_transform *frames, size_t frame_capacity,
+                            manipulator_transform *workspace, size_t workspace_capacity);
 #ifdef __cplusplus
 }
 #endif

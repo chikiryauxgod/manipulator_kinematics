@@ -12,10 +12,10 @@ CXX = os.environ.get("CXX", "c++")
 
 CONSUMER = '''#include <manipulator/forward.h>
 int main(void) {
-    mk_dh_joint joints[3] = {{MK_REVOLUTE,1,0,0,0}, {MK_REVOLUTE,2,0,0,0}, {MK_REVOLUTE,3,0,0,0}};
-    mk_real q[3] = {0,0,0}; mk_model model; mk_transform out;
-    if(mk_model_init(&model,joints,3)!=MK_OK) return 1;
-    if(mk_forward(&model,q,3,&out)!=MK_OK) return 2;
+    manipulator_dh_joint joints[3] = {{MANIPULATOR_REVOLUTE,1,0,0,0}, {MANIPULATOR_REVOLUTE,2,0,0,0}, {MANIPULATOR_REVOLUTE,3,0,0,0}};
+    manipulator_real q[3] = {0,0,0}; manipulator_model model; manipulator_transform out;
+    if(manipulator_model_init(&model,joints,3)!=MANIPULATOR_OK) return 1;
+    if(manipulator_forward(&model,q,3,&out)!=MANIPULATOR_OK) return 2;
     return out.m[0][3]==6 && out.m[1][3]==0 ? 0 : 3;
 }
 '''
@@ -42,7 +42,7 @@ def test_relocated_install_and_external_consumers(profile, tmp_path, custom_dirs
     (library_source/"LICENSE").write_text(license_notice)
     library_build=tmp_path/"library build"
     configure=["cmake","-S",library_source,"-B",library_build,
-               f"-DMK_REAL_TYPE={profile}","-DCMAKE_BUILD_TYPE=Release"]
+               f"-DMANIPULATOR_REAL_TYPE={profile}","-DCMAKE_BUILD_TYPE=Release"]
     if custom_dirs:
         configure.extend(["-DCMAKE_INSTALL_INCLUDEDIR=headers", "-DCMAKE_INSTALL_LIBDIR=libraries",
                           "-DCMAKE_INSTALL_DOCDIR=manuals/manipulator"])
@@ -87,7 +87,7 @@ def test_add_subdirectory_is_c_only(built_profile, tmp_path):
     (source/"main.c").write_text(CONSUMER)
     (source/"CMakeLists.txt").write_text(f'''cmake_minimum_required(VERSION 3.20)
 project(parent LANGUAGES C)
-set(MK_REAL_TYPE {built_profile[0]} CACHE STRING "" FORCE)
+set(MANIPULATOR_REAL_TYPE {built_profile[0]} CACHE STRING "" FORCE)
 add_subdirectory([[{ROOT}]] library)
 add_executable(consumer main.c)
 target_link_libraries(consumer PRIVATE manipulator::kinematics)
@@ -125,7 +125,7 @@ find_package(manipulator {requested_version} CONFIG REQUIRED)
 
 
 def test_invalid_profile_is_configuration_error(tmp_path):
-    result=subprocess.run(["cmake","-S",str(ROOT),"-B",str(tmp_path/"bad"),"-DMK_REAL_TYPE=half"],
+    result=subprocess.run(["cmake","-S",str(ROOT),"-B",str(tmp_path/"bad"),"-DMANIPULATOR_REAL_TYPE=half"],
                           capture_output=True,text=True,timeout=30)
     assert result.returncode!=0
     assert "must be float or double" in result.stderr
@@ -143,7 +143,7 @@ def test_fast_math_is_rejected(built_profile, tmp_path, flag):
 def test_conflicting_config_is_rejected(built_profile, tmp_path):
     source=tmp_path/"main.c"; source.write_text(CONSUMER)
     override="0" if built_profile[0]=="float" else "1"
-    result=subprocess.run([CC,f"-DMK_USE_FLOAT={override}","-I",str(ROOT/"include"),
+    result=subprocess.run([CC,f"-DMANIPULATOR_USE_FLOAT={override}","-I",str(ROOT/"include"),
                            "-I",str(built_profile[1]/"generated"),"-fsyntax-only",str(source)],
                            capture_output=True,text=True,timeout=30)
     assert result.returncode!=0
@@ -152,8 +152,8 @@ def test_conflicting_config_is_rejected(built_profile, tmp_path):
 
 def test_configurable_driver_limit(tmp_path):
     build=tmp_path/"limited"
-    run_checked(["cmake","-S",ROOT,"-B",build,"-DMK_BUILD_TEST_DRIVER=ON",
-                 "-DMK_DRIVER_MAX_JOINTS=3","-DCMAKE_BUILD_TYPE=Release"])
+    run_checked(["cmake","-S",ROOT,"-B",build,"-DMANIPULATOR_BUILD_TEST_DRIVER=ON",
+                 "-DMANIPULATOR_DRIVER_MAX_JOINTS=3","-DCMAKE_BUILD_TYPE=Release"])
     run_checked(["cmake","--build",build,"--parallel","2"])
     exe=Path((build/"driver-path-Release.txt").read_text().strip())
     from test_forward_stream import request_line
@@ -164,7 +164,7 @@ def test_configurable_driver_limit(tmp_path):
 
 def test_multiconfig_driver_metadata(tmp_path):
     build=tmp_path/"multiconfig"
-    run_checked(["cmake","-G","Ninja Multi-Config","-S",ROOT,"-B",build,"-DMK_BUILD_TEST_DRIVER=ON"])
+    run_checked(["cmake","-G","Ninja Multi-Config","-S",ROOT,"-B",build,"-DMANIPULATOR_BUILD_TEST_DRIVER=ON"])
     run_checked(["cmake","--build",build,"--config","Release","--parallel","2"])
     exe=Path((build/"driver-path-Release.txt").read_text().strip())
     assert exe.is_file()

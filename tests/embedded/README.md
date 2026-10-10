@@ -8,14 +8,14 @@
 python3 -m pytest tests/integration/test_embedded.py --embedded -q
 ```
 
-Инструменты ищутся в PATH. При установке в отдельный каталог задайте `MK_ARM_TOOLCHAIN_DIR` (каталог bin) и `MK_QEMU_PATH` (путь к бинарнику QEMU). Динамические зависимости QEMU должны разрешаться средой. Отсутствие инструментов с флагом `--embedded` считается ошибкой.
+Инструменты ищутся в PATH. При установке в отдельный каталог задайте `MANIPULATOR_ARM_TOOLCHAIN_DIR` (каталог bin) и `MANIPULATOR_QEMU_PATH` (путь к бинарнику QEMU). Динамические зависимости QEMU должны разрешаться средой. Отсутствие инструментов с флагом `--embedded` считается ошибкой.
 
 Для ручного запуска одного профиля:
 
 ```sh
 cmake -S . -B build-arm -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/arm_none_eabi.cmake \
-  -DMK_REAL_TYPE=double -DMK_BUILD_EMBEDDED_SMOKE=ON
+  -DMANIPULATOR_REAL_TYPE=double -DMANIPULATOR_BUILD_EMBEDDED_SMOKE=ON
 cmake --build build-arm
 qemu-system-arm -M mps2-an386 -cpu cortex-m4 -nographic \
   -semihosting-config enable=on,target=native \

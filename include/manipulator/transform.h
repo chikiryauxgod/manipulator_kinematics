@@ -4,11 +4,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-mk_status mk_transform_identity(mk_transform *out);
-mk_status mk_transform_validate(const mk_transform *transform);
+manipulator_status manipulator_transform_identity(manipulator_transform *out);
+manipulator_status manipulator_transform_validate(const manipulator_transform *transform);
 
-mk_status mk_transform_compose(const mk_transform *parent_mid,
-                               const mk_transform *mid_child, mk_transform *out);
+manipulator_status manipulator_transform_compose(const manipulator_transform *parent_mid,
+                               const manipulator_transform *mid_child, manipulator_transform *out);
 #ifdef __cplusplus
 }
 #endif
