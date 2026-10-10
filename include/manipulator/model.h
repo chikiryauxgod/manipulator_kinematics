@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-manipulator_status manipulator_model_init(manipulator_model *out, const manipulator_dh_joint *joints, size_t joint_count);
-manipulator_status manipulator_model_validate(const manipulator_model *model);
+k_status k_model_init(k_model *out, const k_dh_joint *joints, size_t joint_count);
+k_status k_model_validate(const k_model *model);
 #ifdef __cplusplus
 }
 #endif

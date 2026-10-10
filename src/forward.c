@@ -2,54 +2,54 @@
 #include <string.h>
 #include "internal.h"
 
-static manipulator_status validate_inputs(const manipulator_model *model, const manipulator_real *q, size_t count)
+static k_status validate_inputs(const k_model *model, const k_real *q, size_t count)
 {
-    if (!q) return MANIPULATOR_INVALID_ARGUMENT;
-    manipulator_status status = manipulator_model_validate(model);
-    if (status != MANIPULATOR_OK) return status;
-    if (count != model->joint_count) return MANIPULATOR_SIZE_MISMATCH;
+    if (!q) return K_INVALID_ARGUMENT;
+    k_status status = k_model_validate(model);
+    if (status != K_OK) return status;
+    if (count != model->joint_count) return K_SIZE_MISMATCH;
     for (size_t i = 0; i < count; ++i)
-        if (!isfinite(q[i])) return MANIPULATOR_NONFINITE_INPUT;
-    return MANIPULATOR_OK;
+        if (!isfinite(q[i])) return K_NONFINITE_INPUT;
+    return K_OK;
 }
 
-static manipulator_status walk(const manipulator_model *model, const manipulator_real *q,
-                      manipulator_transform *tool, manipulator_transform *frames)
+static k_status walk(const k_model *model, const k_real *q,
+                      k_transform *tool, k_transform *frames)
 {
-    manipulator_transform current = model->world_base;
+    k_transform current = model->world_base;
     if (frames) frames[0] = current;
     for (size_t i = 0; i < model->joint_count; ++i) {
-        manipulator_transform local;
-        manipulator_status status = manipulator_internal_dh(&model->joints[i], q[i], &local);
-        if (status != MANIPULATOR_OK) return status;
-        status = manipulator_internal_compose(&current, &local, &current);
-        if (status != MANIPULATOR_OK) return status;
+        k_transform local;
+        k_status status = k_internal_dh(&model->joints[i], q[i], &local);
+        if (status != K_OK) return status;
+        status = k_internal_compose(&current, &local, &current);
+        if (status != K_OK) return status;
         if (frames) frames[i+1] = current;
     }
-    manipulator_status status = manipulator_internal_compose(&current, &model->last_tool, &current);
-    if (status != MANIPULATOR_OK) return status;
+    k_status status = k_internal_compose(&current, &model->last_tool, &current);
+    if (status != K_OK) return status;
     if (frames) frames[model->joint_count+1] = current;
     if (tool) *tool = current;
-    return MANIPULATOR_OK;
+    return K_OK;
 }
 
-manipulator_status manipulator_forward(const manipulator_model *model, const manipulator_real *q, size_t n, manipulator_transform *out)
+k_status k_forward(const k_model *model, const k_real *q, size_t n, k_transform *out)
 {
-    if (!out) return MANIPULATOR_INVALID_ARGUMENT;
-    manipulator_status status = validate_inputs(model, q, n);
-    return status != MANIPULATOR_OK ? status : walk(model, q, out, NULL);
+    if (!out) return K_INVALID_ARGUMENT;
+    k_status status = validate_inputs(model, q, n);
+    return status != K_OK ? status : walk(model, q, out, NULL);
 }
 
-manipulator_status manipulator_forward_frames(const manipulator_model *model, const manipulator_real *q, size_t n,
-                            manipulator_transform *frames, size_t capacity,
-                            manipulator_transform *workspace, size_t work_capacity)
+k_status k_forward_frames(const k_model *model, const k_real *q, size_t n,
+                            k_transform *frames, size_t capacity,
+                            k_transform *workspace, size_t work_capacity)
 {
-    if (!frames || !workspace) return MANIPULATOR_INVALID_ARGUMENT;
-    manipulator_status status = validate_inputs(model, q, n);
-    if (status != MANIPULATOR_OK) return status;
+    if (!frames || !workspace) return K_INVALID_ARGUMENT;
+    k_status status = validate_inputs(model, q, n);
+    if (status != K_OK) return status;
     size_t needed = model->joint_count + 2;
-    if (capacity < needed || work_capacity < needed) return MANIPULATOR_BUFFER_TOO_SMALL;
+    if (capacity < needed || work_capacity < needed) return K_BUFFER_TOO_SMALL;
     status = walk(model, q, NULL, workspace);
-    if (status == MANIPULATOR_OK) memcpy(frames, workspace, needed * sizeof(*frames));
+    if (status == K_OK) memcpy(frames, workspace, needed * sizeof(*frames));
     return status;
 }

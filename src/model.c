@@ -1,38 +1,38 @@
 #include <manipulator/model.h>
 #include "internal.h"
 
-manipulator_status manipulator_internal_joints_validate(const manipulator_dh_joint *joints, size_t n)
+k_status k_internal_joints_validate(const k_dh_joint *joints, size_t n)
 {
-    if (!joints) return MANIPULATOR_INVALID_ARGUMENT;
-    if (!manipulator_count_valid(n)) return MANIPULATOR_INVALID_MODEL;
+    if (!joints) return K_INVALID_ARGUMENT;
+    if (!k_count_valid(n)) return K_INVALID_MODEL;
     for (size_t i = 0; i < n; ++i) {
-        const manipulator_dh_joint *j = &joints[i];
-        if (j->type != MANIPULATOR_REVOLUTE && j->type != MANIPULATOR_PRISMATIC) return MANIPULATOR_INVALID_MODEL;
+        const k_dh_joint *j = &joints[i];
+        if (j->type != K_REVOLUTE && j->type != K_PRISMATIC) return K_INVALID_MODEL;
         if (!isfinite(j->a) || !isfinite(j->alpha) || !isfinite(j->d_offset)
-            || !isfinite(j->theta_offset)) return MANIPULATOR_NONFINITE_INPUT;
+            || !isfinite(j->theta_offset)) return K_NONFINITE_INPUT;
     }
-    return MANIPULATOR_OK;
+    return K_OK;
 }
 
-manipulator_status manipulator_model_validate(const manipulator_model *model)
+k_status k_model_validate(const k_model *model)
 {
-    if (!model) return MANIPULATOR_INVALID_ARGUMENT;
-    manipulator_status status = manipulator_internal_joints_validate(model->joints, model->joint_count);
-    if (status != MANIPULATOR_OK) return status;
-    status = manipulator_transform_validate(&model->world_base);
-    return status != MANIPULATOR_OK ? status : manipulator_transform_validate(&model->last_tool);
+    if (!model) return K_INVALID_ARGUMENT;
+    k_status status = k_internal_joints_validate(model->joints, model->joint_count);
+    if (status != K_OK) return status;
+    status = k_transform_validate(&model->world_base);
+    return status != K_OK ? status : k_transform_validate(&model->last_tool);
 }
 
-manipulator_status manipulator_model_init(manipulator_model *out, const manipulator_dh_joint *joints, size_t n)
+k_status k_model_init(k_model *out, const k_dh_joint *joints, size_t n)
 {
-    if (!out) return MANIPULATOR_INVALID_ARGUMENT;
-    manipulator_status status = manipulator_internal_joints_validate(joints, n);
-    if (status != MANIPULATOR_OK) return status;
-    manipulator_model result;
+    if (!out) return K_INVALID_ARGUMENT;
+    k_status status = k_internal_joints_validate(joints, n);
+    if (status != K_OK) return status;
+    k_model result;
     result.joints = joints;
     result.joint_count = n;
-    (void)manipulator_transform_identity(&result.world_base);
-    (void)manipulator_transform_identity(&result.last_tool);
+    (void)k_transform_identity(&result.world_base);
+    (void)k_transform_identity(&result.last_tool);
     *out = result;
-    return MANIPULATOR_OK;
+    return K_OK;
 }

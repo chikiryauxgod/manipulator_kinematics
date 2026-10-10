@@ -5,7 +5,7 @@
 ## Сборка и один запрос
 
 ```sh
-cmake -S . -B build-driver -DCMAKE_BUILD_TYPE=Release -DMANIPULATOR_BUILD_TEST_DRIVER=ON
+cmake -S . -B build-driver -DCMAKE_BUILD_TYPE=Release -DK_BUILD_TEST_DRIVER=ON
 cmake --build build-driver
 ./build-driver/manipulator_fk_driver <<'REQUEST'
 FK 1 R 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
@@ -24,9 +24,9 @@ OK 1 0 0 1 0 1 0 0 0 0 1 0 0 0 0 1
 
 `FK n [R/P a alpha d_offset theta_offset q]×n [world_base]×16 [last_tool]×16`.
 
-Числа матриц передаются построчно. n — положительное целое без знака и ведущих нулей. По умолчанию допускаются до 64 суставов; опция сборки `MANIPULATOR_DRIVER_MAX_JOINTS` меняет предел адаптера. Ядро этого предела не имеет. Длины — метры, углы — радианы, DH — стандартный.
+Числа матриц передаются построчно. n — положительное целое без знака и ведущих нулей. По умолчанию допускаются до 64 суставов; опция сборки `K_DRIVER_MAX_JOINTS` меняет предел адаптера. Ядро этого предела не имеет. Длины — метры, углы — радианы, DH — стандартный.
 
-Разделители — ASCII space/tab. Числа записываются десятично, допускается экспонента: `1`, `.25`, `1.`, `-2e-3`. Запрещены hex-float, запятая, суффиксы и частичные токены. Специальные `nan`, `inf`, `+inf`, `-inf` передаются API и дают `MANIPULATOR_NONFINITE_INPUT`. Overflow/underflow текстового преобразования дают `NUMBER_RANGE_ERROR`.
+Разделители — ASCII space/tab. Числа записываются десятично, допускается экспонента: `1`, `.25`, `1.`, `-2e-3`. Запрещены hex-float, запятая, суффиксы и частичные токены. Специальные `nan`, `inf`, `+inf`, `-inf` передаются API и дают `K_NONFINITE_INPUT`. Overflow/underflow текстового преобразования дают `NUMBER_RANGE_ERROR`.
 
 Успех возвращает `OK` и 16 элементов world_tool; ошибка — `ERR` и имя статуса API либо `PARSE_ERROR`, `REQUEST_TOO_LARGE`, `NUMBER_RANGE_ERROR`. Все ответы заканчиваются переводом строки и сразу сбрасываются в stdout, в том числе до EOF. Предыдущая модель не наследуется.
 

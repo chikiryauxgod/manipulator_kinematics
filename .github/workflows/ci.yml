@@ -38,8 +38,8 @@ jobs:
           fi
           cmake -S . -B build-unit \
             -DCMAKE_C_COMPILER="$c_compiler" -DCMAKE_CXX_COMPILER="$cpp_compiler" \
-            -DCMAKE_BUILD_TYPE='${{ matrix.config }}' -DMANIPULATOR_REAL_TYPE='${{ matrix.profile }}' \
-            -DMANIPULATOR_BUILD_UNIT_TESTS=ON -DMANIPULATOR_ENABLE_SANITIZERS="$sanitizers"
+            -DCMAKE_BUILD_TYPE='${{ matrix.config }}' -DK_REAL_TYPE='${{ matrix.profile }}' \
+            -DK_BUILD_UNIT_TESTS=ON -DK_ENABLE_SANITIZERS="$sanitizers"
           cmake --build build-unit --parallel 2
           ctest --test-dir build-unit --output-on-failure
           python3 ci/numerical_report.py build-unit/gtest-results > build-unit/numerical-results.txt

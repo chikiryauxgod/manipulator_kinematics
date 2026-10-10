@@ -9,10 +9,10 @@
 Для каждого профиля нужен отдельный install prefix:
 
 ```sh
-cmake -S . -B build-release-double -DCMAKE_BUILD_TYPE=Release -DMANIPULATOR_REAL_TYPE=double
+cmake -S . -B build-release-double -DCMAKE_BUILD_TYPE=Release -DK_REAL_TYPE=double
 cmake --build build-release-double
 cmake --install build-release-double --prefix "$PWD/install-double"
-cmake -S . -B build-release-float -DCMAKE_BUILD_TYPE=Release -DMANIPULATOR_REAL_TYPE=float
+cmake -S . -B build-release-float -DCMAKE_BUILD_TYPE=Release -DK_REAL_TYPE=float
 cmake --build build-release-float
 cmake --install build-release-float --prefix "$PWD/install-float"
 ```

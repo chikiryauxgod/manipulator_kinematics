@@ -13,14 +13,14 @@ from conftest import ROOT, run_checked
 def test_cross_link_qemu_and_no_heap(profile, request, tmp_path):
     if not request.config.getoption("--embedded"):
         pytest.skip("Enable mandatory embedded job with --embedded")
-    tool_dir=os.environ.get("MANIPULATOR_ARM_TOOLCHAIN_DIR", "")
+    tool_dir=os.environ.get("K_ARM_TOOLCHAIN_DIR", "")
     compiler=shutil.which("arm-none-eabi-gcc",path=tool_dir or None)
-    qemu=os.environ.get("MANIPULATOR_QEMU_PATH") or shutil.which("qemu-system-arm")
+    qemu=os.environ.get("K_QEMU_PATH") or shutil.which("qemu-system-arm")
     assert compiler and qemu, "Embedded job requires installed ARM GCC and QEMU"
     build=tmp_path/"cross"
     run_checked(["cmake","-S",ROOT,"-B",build,
                  f"-DCMAKE_TOOLCHAIN_FILE={ROOT/'cmake/toolchains/arm_none_eabi.cmake'}",
-                 "-DMANIPULATOR_BUILD_EMBEDDED_SMOKE=ON",f"-DMANIPULATOR_REAL_TYPE={profile}","-DCMAKE_BUILD_TYPE=Release"])
+                 "-DK_BUILD_EMBEDDED_SMOKE=ON",f"-DK_REAL_TYPE={profile}","-DCMAKE_BUILD_TYPE=Release"])
     run_checked(["cmake","--build",build,"--parallel","2"])
     elf=build/"manipulator_smoke.elf"
     result=subprocess.run([str(qemu),"-M","mps2-an386","-cpu","cortex-m4","-nographic",

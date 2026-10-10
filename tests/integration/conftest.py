@@ -27,9 +27,9 @@ def profile(request):
 @pytest.fixture(scope="session")
 def built_profile(profile, tmp_path_factory, request):
     build = tmp_path_factory.mktemp(f"cmake-{profile}")
-    run_checked(["cmake", "-S", ROOT, "-B", build, f"-DMANIPULATOR_REAL_TYPE={profile}",
-                 "-DMANIPULATOR_BUILD_TEST_DRIVER=ON", "-DCMAKE_BUILD_TYPE=Release",
-                 f"-DMANIPULATOR_ENABLE_SANITIZERS={'ON' if request.config.getoption('--sanitizers') else 'OFF'}"])
+    run_checked(["cmake", "-S", ROOT, "-B", build, f"-DK_REAL_TYPE={profile}",
+                 "-DK_BUILD_TEST_DRIVER=ON", "-DCMAKE_BUILD_TYPE=Release",
+                 f"-DK_ENABLE_SANITIZERS={'ON' if request.config.getoption('--sanitizers') else 'OFF'}"])
     run_checked(["cmake", "--build", build, "--config", "Release", "--parallel", "2"])
     manifest = build / "driver-path-Release.txt"
     assert manifest.is_file()

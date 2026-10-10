@@ -1,30 +1,30 @@
 #ifndef MANIPULATOR_CONFIG_H
 #define MANIPULATOR_CONFIG_H
-#if defined(MANIPULATOR_USE_FLOAT) && MANIPULATOR_USE_FLOAT != @MANIPULATOR_USE_FLOAT@
-#error "MANIPULATOR_USE_FLOAT conflicts with installed arithmetic profile"
+#if defined(K_USE_FLOAT) && K_USE_FLOAT != @K_USE_FLOAT@
+#error "K_USE_FLOAT conflicts with installed arithmetic profile"
 #endif
-#ifndef MANIPULATOR_USE_FLOAT
-#define MANIPULATOR_USE_FLOAT @MANIPULATOR_USE_FLOAT@
+#ifndef K_USE_FLOAT
+#define K_USE_FLOAT @K_USE_FLOAT@
 #endif
-#define MANIPULATOR_VERSION_MAJOR 0
-#define MANIPULATOR_VERSION_MINOR 1
-#define MANIPULATOR_VERSION_PATCH 0
-#define MANIPULATOR_ABI_VERSION 1
-#if MANIPULATOR_USE_FLOAT
-#define manipulator_model_init manipulator_v1_f32_model_init
-#define manipulator_model_validate manipulator_v1_f32_model_validate
-#define manipulator_transform_identity manipulator_v1_f32_transform_identity
-#define manipulator_transform_validate manipulator_v1_f32_transform_validate
-#define manipulator_transform_compose manipulator_v1_f32_transform_compose
-#define manipulator_forward manipulator_v1_f32_forward
-#define manipulator_forward_frames manipulator_v1_f32_forward_frames
+#define K_VERSION_MAJOR 0
+#define K_VERSION_MINOR 1
+#define K_VERSION_PATCH 0
+#define K_ABI_VERSION 1
+#if K_USE_FLOAT
+#define k_model_init k_v1_f32_model_init
+#define k_model_validate k_v1_f32_model_validate
+#define k_transform_identity k_v1_f32_transform_identity
+#define k_transform_validate k_v1_f32_transform_validate
+#define k_transform_compose k_v1_f32_transform_compose
+#define k_forward k_v1_f32_forward
+#define k_forward_frames k_v1_f32_forward_frames
 #else
-#define manipulator_model_init manipulator_v1_f64_model_init
-#define manipulator_model_validate manipulator_v1_f64_model_validate
-#define manipulator_transform_identity manipulator_v1_f64_transform_identity
-#define manipulator_transform_validate manipulator_v1_f64_transform_validate
-#define manipulator_transform_compose manipulator_v1_f64_transform_compose
-#define manipulator_forward manipulator_v1_f64_forward
-#define manipulator_forward_frames manipulator_v1_f64_forward_frames
+#define k_model_init k_v1_f64_model_init
+#define k_model_validate k_v1_f64_model_validate
+#define k_transform_identity k_v1_f64_transform_identity
+#define k_transform_validate k_v1_f64_transform_validate
+#define k_transform_compose k_v1_f64_transform_compose
+#define k_forward k_v1_f64_forward
+#define k_forward_frames k_v1_f64_forward_frames
 #endif
 #endif

@@ -97,7 +97,7 @@ def test_number_grammar(driver, number):
 
 @pytest.mark.parametrize("number", ["nan", "inf", "+inf", "-inf"])
 def test_nonfinite_is_api_error(driver, number):
-    assert execute(driver, request_line([["R", number, 0, 0, 0, 0]])+"\n") == ["ERR MANIPULATOR_NONFINITE_INPUT"]
+    assert execute(driver, request_line([["R", number, 0, 0, 0, 0]])+"\n") == ["ERR K_NONFINITE_INPUT"]
 
 
 @pytest.mark.parametrize("number", ["+1.", ".25", "-0.5", "2e-3"])
@@ -137,14 +137,14 @@ def test_empty_eof(driver):
 
 def test_invalid_transform(driver):
     bad = IDENTITY.copy(); bad[12] = 1e-10
-    assert execute(driver, request_line(base=bad)+"\n") == ["ERR MANIPULATOR_INVALID_TRANSFORM"]
+    assert execute(driver, request_line(base=bad)+"\n") == ["ERR K_INVALID_TRANSFORM"]
 
 
 def test_numeric_error_and_recovery(driver):
     huge = "3e38" if driver[0]=="float" else "1e308"
     line = request_line([["P",0,0,huge,0,huge]])
     answers = execute(driver,line+"\n"+request_line()+"\n")
-    assert answers[0] == "ERR MANIPULATOR_NUMERIC_ERROR"
+    assert answers[0] == "ERR K_NUMERIC_ERROR"
     matrix(answers[1])
 
 
