@@ -18,4 +18,4 @@ git push -u origin feature/project_init
 
 Это автоматически запускает workflow C11 kinematics. В GitHub откройте Actions и проверьте все восемь host jobs и integration-and-embedded; результаты должны относиться к отправленному commit. Ручной запуск через Run workflow доступен, когда файл workflow присутствует в default branch репозитория, согласно [инструкции GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow). Если push уже запустил проверки, повторный ручной запуск не нужен.
 
-Успешный локальный Docker-прогон не считается удалённым запуском GitHub Actions. [Удалённый запуск](https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848) для commit 15c4d8f завершился успешно: все девять jobs прошли, артефакты сохранены. Этап 7 Roadmap завершён.
+Успешный локальный Docker-прогон не считается удалённым запуском GitHub Actions. [Удалённый запуск](https://github.com/chikiryauxgod/manipulator_kinematics/actions/runs/38043984848) для commit 15c4d8f завершился успешно: все девять jobs прошли, артефакты сохранены.
