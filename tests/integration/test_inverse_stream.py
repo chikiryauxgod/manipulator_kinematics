@@ -6,13 +6,13 @@ from test_forward_stream import IDENTITY, execute, matrix, request_line
 
 
 def inverse_request(rows, target, request_id=1, iterations=500, trials=16,
-                    tolerance=2e-5, damping=0.005, base=None, tool=None):
+                    tolerance=2e-5, damping=0.005, base=None, tool=None, length_scale=1):
     tokens = ["IK", len(rows), request_id]
     for row in rows:
         tokens.extend(row)
     tokens.extend(IDENTITY if base is None else base)
     tokens.extend(IDENTITY if tool is None else tool)
-    tokens.extend([*target, tolerance, 1, damping, iterations, trials])
+    tokens.extend([*target, tolerance, length_scale, damping, iterations, trials])
     return " ".join(map(str, tokens))
 
 
@@ -109,3 +109,22 @@ def test_inverse_and_forward_requests_share_stream(driver):
     matrix(lines[1])
     result(lines[2], 1, 1)
     result(lines[3], 1, 2)
+
+
+def test_normalization_with_small_length_scale(driver):
+    smallest = math.ldexp(1.0, -126 if driver[0] == "float" else -1022)
+    rows = [["P", 0, 0, 0, 0, 0, "U", 0, 0, 1, 16]]
+    request = inverse_request(rows, [0, 0, 8], length_scale=smallest)
+    positions, residual = result(execute(driver, request+"\n")[0], 1, 1)
+    assert positions[0] == pytest.approx(8, abs=2e-5)
+    assert residual <= 2e-5
+
+
+def test_normalization_with_large_joint_scale(driver):
+    large = math.ldexp(1.0, 127 if driver[0] == "float" else 1023)
+    rows = [["R", 4, 0, 0, 0, 0.1, "U", 0, 0, large, 0.2]]
+    target = [4*math.cos(0.5), 4*math.sin(0.5), 0]
+    request = inverse_request(rows, target, length_scale=large)
+    positions, residual = result(execute(driver, request+"\n")[0], 1, 1)
+    assert positions[0] == pytest.approx(0.5, abs=1e-5)
+    assert residual <= 2e-5

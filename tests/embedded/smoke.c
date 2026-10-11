@@ -186,6 +186,34 @@ int main(void)
     if (k_forward(&model, ik_output, 3, &out) != K_OK || !near(out.m[0][3], target.x) ||
         !near(out.m[2][3], target.z))
         return 27;
+    joints[0] = (k_dh_joint){K_PRISMATIC, 0, 0, 0, 0};
+    q[0] = 0;
+    scales[0] = 1;
+    steps[0] = 16;
+    options.joint_count = 1;
+#if K_USE_FLOAT
+    options.length_scale = FLT_MIN;
+#else
+    options.length_scale = DBL_MIN;
+#endif
+    target = (k_vec3){0, 0, 8};
+    if (test_setup(&model, storage, 64, joints, 1, &unit, &unit) != K_OK ||
+        k_inverse_position(&model, &target, q, 1, &options, ik_workspace, 384, ik_output, 64,
+                           NULL) != K_OK ||
+        !near(ik_output[0], 8))
+        return 28;
+    joints[0] = (k_dh_joint){K_REVOLUTE, 4, 0, 0, 0};
+    q[0] = (k_real)0.1;
+    scales[0] = largest * (k_real)0.5;
+    steps[0] = (k_real)0.2;
+    options.length_scale = scales[0];
+    target = (k_vec3){(k_real)(4 * cos(0.5)), (k_real)(4 * sin(0.5)), 0};
+    if (test_setup(&model, storage, 64, joints, 1, &unit, &unit) != K_OK ||
+        k_inverse_position(&model, &target, q, 1, &options, ik_workspace, 384, ik_output, 64,
+                           NULL) != K_OK ||
+        !near(ik_output[0], (k_real)0.5))
+        return 29;
+    host_write("IK_NORMALIZATION_OK\n");
     host_write("IK_SMOKE_OK\n");
     host_write("SMOKE_OK\n");
     return 0;

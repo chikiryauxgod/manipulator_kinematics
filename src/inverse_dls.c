@@ -1,6 +1,52 @@
 #include <manipulator/inverse.h>
 #include "inverse_internal.h"
 
+static int normalize_column(k_real value, k_real weight, k_real length, k_real *out)
+{
+    if (value == 0)
+    {
+        *out = 0;
+        return 1;
+    }
+    k_real product;
+    if (k_checked_mul(value, weight, &product) && fpclassify(product) == FP_NORMAL)
+    {
+        *out = product / length;
+        if (isfinite(*out))
+            return 1;
+    }
+    int value_exponent, weight_exponent, length_exponent;
+    k_real value_fraction = K_FREXP(value, &value_exponent);
+    k_real weight_fraction = K_FREXP(weight, &weight_exponent);
+    k_real length_fraction = K_FREXP(length, &length_exponent);
+    *out = K_SCALBN(value_fraction * weight_fraction / length_fraction,
+                    value_exponent + weight_exponent - length_exponent);
+    return isfinite(*out);
+}
+
+static int normalize_error(k_real value, k_real length, k_real scale, k_real *out)
+{
+    if (value == 0)
+    {
+        *out = 0;
+        return 1;
+    }
+    k_real quotient = value / length;
+    if (isfinite(quotient) && fpclassify(quotient) == FP_NORMAL)
+    {
+        *out = quotient / scale;
+        if (isfinite(*out))
+            return 1;
+    }
+    int value_exponent, length_exponent, scale_exponent;
+    k_real value_fraction = K_FREXP(value, &value_exponent);
+    k_real length_fraction = K_FREXP(length, &length_exponent);
+    k_real scale_fraction = K_FREXP(scale, &scale_exponent);
+    *out = K_SCALBN(value_fraction / length_fraction / scale_fraction,
+                    value_exponent - length_exponent - scale_exponent);
+    return isfinite(*out);
+}
+
 k_status k_internal_dls(k_real *columns, size_t count, const k_real error[3],
                         const k_ik_options *options, k_real *step, k_real gradient_rhs[3],
                         k_real *effective_damping)
@@ -10,10 +56,7 @@ k_status k_internal_dls(k_real *columns, size_t count, const k_real error[3],
         for (size_t r = 0; r < 3; ++r)
         {
             k_real *value = columns + 3 * i + r;
-            if (!k_checked_mul(*value, options->joint_scales[i], value))
-                return K_NUMERIC_ERROR;
-            *value /= options->length_scale;
-            if (!isfinite(*value))
+            if (!normalize_column(*value, options->joint_scales[i], options->length_scale, value))
                 return K_NUMERIC_ERROR;
             if (K_ABS(*value) > scale)
                 scale = K_ABS(*value);
@@ -28,8 +71,7 @@ k_status k_internal_dls(k_real *columns, size_t count, const k_real error[3],
     k_real matrix[3][3] = {{0}}, rhs[3], result[3];
     for (size_t r = 0; r < 3; ++r)
     {
-        rhs[r] = (error[r] / options->length_scale) / scale;
-        if (!isfinite(rhs[r]))
+        if (!normalize_error(error[r], options->length_scale, scale, &rhs[r]))
             return K_NUMERIC_ERROR;
         gradient_rhs[r] = rhs[r];
         matrix[r][r] = regularization;

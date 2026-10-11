@@ -330,6 +330,56 @@ TEST(Inverse, SmallLengthScaleKeepsRegularizationRepresentable)
     EXPECT_LE(report.residual, config.position_tolerance);
 }
 
+TEST(Inverse, NormalizationAvoidsIntermediateOverflowAndUnderflow)
+{
+    const k_real largest = std::numeric_limits<k_real>::max();
+    const k_real smallest = std::numeric_limits<k_real>::min();
+    struct Case
+    {
+        k_real column, joint_scale, length_scale, damping, error, expected;
+    };
+    const Case cases[] = {
+        {4, largest * (k_real).5, largest * (k_real).5, (k_real).1, 2, (k_real)(8.0 / 16.01)},
+        {1, 1, smallest, (k_real).005, 8, 8},
+        {smallest, smallest, smallest, smallest, smallest, (k_real).5},
+        {smallest, largest * (k_real).5, largest * (k_real).5, smallest, smallest, (k_real).5},
+        {-4, largest * (k_real).5, largest * (k_real).5, (k_real).1, 2, (k_real)(-8.0 / 16.01)}};
+    for (const auto &item : cases)
+    {
+        std::vector<k_real> scales{item.joint_scale}, steps{16};
+        auto config = options(scales, steps);
+        config.length_scale = item.length_scale;
+        config.damping = item.damping;
+        k_real columns[3] = {0, 0, item.column}, error[3] = {0, 0, item.error};
+        k_real step[1], gradient[3], effective;
+        ASSERT_EQ(k_internal_dls(columns, 1, error, &config, step, gradient, &effective), K_OK);
+        EXPECT_NEAR(step[0], item.expected, K_USE_FLOAT ? 1e-4 : 1e-12);
+        EXPECT_TRUE(std::isfinite(effective));
+        EXPECT_GT(effective, 0);
+    }
+}
+
+TEST(Inverse, UnrepresentableNormalizationPreservesOutput)
+{
+    k_dh_joint geometry{K_PRISMATIC, 0, 0, 0, 0};
+    TestModel model;
+    ASSERT_EQ(test_model_init(&model, &geometry, 1), K_OK);
+    std::vector<k_real> scales{16}, steps{1};
+    auto config = options(scales, steps);
+    config.length_scale = std::numeric_limits<k_real>::min();
+    k_real initial = 0, work[6], output = 91;
+    k_vec3 target{0, 0, 1};
+    k_ik_report report{};
+    EXPECT_EQ(
+        k_inverse_position(&model, &target, &initial, 1, &config, work, 6, &output, 1, &report),
+        K_NUMERIC_ERROR);
+    EXPECT_EQ(output, 91);
+    EXPECT_EQ(report.termination, K_NUMERIC_ERROR);
+    EXPECT_TRUE(report.residual_valid);
+    EXPECT_EQ(report.residual, 1);
+    EXPECT_EQ(report.accepted_steps, 0u);
+}
+
 TEST(Inverse, NumericCandidateFailuresUseSmallerTrialsAndPreserveDiagnostics)
 {
     const k_real largest = std::numeric_limits<k_real>::max();

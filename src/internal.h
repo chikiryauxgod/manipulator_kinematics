@@ -20,6 +20,8 @@ _Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 
 #define K_EPSILON FLT_EPSILON
 #define K_SQRT sqrtf
 #define K_HYPOT hypotf
+#define K_FREXP frexpf
+#define K_SCALBN scalbnf
 #define K_TOL ((k_real)2e-5)
 #define K_SIN sinf
 #define K_COS cosf
@@ -29,6 +31,8 @@ _Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 
 #define K_EPSILON DBL_EPSILON
 #define K_SQRT sqrt
 #define K_HYPOT hypot
+#define K_FREXP frexp
+#define K_SCALBN scalbn
 #define K_TOL ((k_real)2e-12)
 #define K_SIN sin
 #define K_COS cos

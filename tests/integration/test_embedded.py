@@ -35,6 +35,7 @@ def test_cross_link_qemu_and_no_heap(profile, request, tmp_path):
     assert max(stacks.values())-min(stacks.values())<=128
     assert max(stacks.values())<16384
     assert "IK_SMOKE_OK" in transcript
+    assert "IK_NORMALIZATION_OK" in transcript
     ik_stacks={int(n):int(size) for n,size in re.findall(r"(?m)^IK_STACK (\d+) (\d+)",transcript)}
     assert set(ik_stacks)=={3,6,64}
     assert max(ik_stacks.values())-min(ik_stacks.values())<=128
