@@ -2,7 +2,8 @@
 #define MANIPULATOR_MODEL_H
 #include <manipulator/types.h>
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 k_status k_model_init(k_model *out, const k_dh_joint *joints, size_t joint_count);

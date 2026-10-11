@@ -9,8 +9,12 @@
 #error "Fast/finite-only math violates the numerical contract"
 #endif
 _Static_assert(CHAR_BIT == 8 && FLT_RADIX == 2, "Binary IEEE arithmetic required");
-_Static_assert(sizeof(float) == 4 && FLT_MANT_DIG == 24 && FLT_MAX_EXP == 128 && FLT_MIN_EXP == -125, "binary32 required");
-_Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 && DBL_MIN_EXP == -1021, "binary64 required");
+_Static_assert(sizeof(float) == 4 && FLT_MANT_DIG == 24 && FLT_MAX_EXP == 128 &&
+                   FLT_MIN_EXP == -125,
+               "binary32 required");
+_Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 &&
+                   DBL_MIN_EXP == -1021,
+               "binary64 required");
 #if K_USE_FLOAT
 #define K_MAX FLT_MAX
 #define K_TOL ((k_real)2e-5)
@@ -24,24 +28,34 @@ _Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 
 #define K_COS cos
 #define K_ABS fabs
 #endif
+
 static inline int k_checked_add(k_real a, k_real b, k_real *out)
 {
-    if ((b > 0 && a > K_MAX - b) || (b < 0 && a < -K_MAX - b)) return 0;
+    if ((b > 0 && a > K_MAX - b) || (b < 0 && a < -K_MAX - b))
+    {
+        return 0;
+    }
     *out = a + b;
+
     return isfinite(*out);
 }
+
 static inline int k_checked_mul(k_real a, k_real b, k_real *out)
 {
     k_real aa = K_ABS(a), ab = K_ABS(b);
-    if (aa > 1 && ab > K_MAX / aa) return 0;
+    if (aa > 1 && ab > K_MAX / aa)
+    {
+        return 0;
+    }
     *out = a * b;
+
     return isfinite(*out);
 }
+
 static inline int k_count_valid(size_t n)
 {
-    return n > 0 && n <= SIZE_MAX / sizeof(k_dh_joint)
-        && n <= SIZE_MAX / sizeof(k_real) && n <= SIZE_MAX - 2
-        && n + 2 <= SIZE_MAX / sizeof(k_transform);
+    return n > 0 && n <= SIZE_MAX / sizeof(k_dh_joint) && n <= SIZE_MAX / sizeof(k_real) &&
+           n <= SIZE_MAX - 2 && n + 2 <= SIZE_MAX / sizeof(k_transform);
 }
 
 k_status k_internal_compose(const k_transform *a, const k_transform *b, k_transform *out);
