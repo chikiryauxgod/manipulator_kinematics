@@ -14,5 +14,5 @@ def test_opposite_profile_fails_at_link_time(built_profile, tmp_path):
                            str(source),str(library),"-lm","-o",str(tmp_path/"wrong")],
                           capture_output=True,text=True,timeout=30)
     assert result.returncode!=0
-    wanted="k_v1_f32_forward" if other=="float" else "k_v1_f64_forward"
+    wanted="k_v2_f32_forward" if other=="float" else "k_v2_f64_forward"
     assert wanted in result.stderr

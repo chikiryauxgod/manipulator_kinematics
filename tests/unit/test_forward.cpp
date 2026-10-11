@@ -19,7 +19,7 @@ TEST_P(Family, SpatialGeometryAgainstIndependentTrigonometry)
     std::vector<k_dh_joint> joints(n,joint());
     joints[0].alpha=(k_real)(pi/2); joints[0].d_offset=(k_real)0.1;
     for(size_t i=1;i<n;++i) joints[i].a=(k_real)(0.05L+0.003L*i);
-    k_model m{}; ASSERT_EQ(k_model_init(&m,joints.data(),n),K_OK);
+    TestModel m{}; ASSERT_EQ(test_model_init(&m,joints.data(),n),K_OK);
     long double max_p_error=0, max_r_error=0;
     for(int sample=0;sample<32;++sample) {
         std::vector<k_real> q(n);
@@ -71,7 +71,7 @@ TEST_P(Family, GeneralMixedSpatialGeometryAndFrames)
                    (k_real)(3*std::cos(2*k)),(k_real)(pi*std::sin(3*k))};
             q[i]=(k_real)(2*std::cos(4*k));
         }
-        k_model m{}; ASSERT_EQ(k_model_init(&m,js.data(),n),K_OK);
+        TestModel m{}; ASSERT_EQ(test_model_init(&m,js.data(),n),K_OK);
         m.world_base={{{0,-1,0,(k_real)1.25},{1,0,0,-2},{0,0,1,3},{0,0,0,1}}};
         m.last_tool={{{0,0,1,2},{1,0,0,-1},{0,1,0,(k_real)0.5},{0,0,0,1}}};
         std::vector<k_transform> frames(n+2),work(n+2);
@@ -119,7 +119,7 @@ TEST(Forward, TwoNonplanarLinksHandCalculated)
     k_dh_joint js[]={{K_REVOLUTE,1,(k_real)(pi/2),3,0},
                      {K_REVOLUTE,2,(k_real)(pi/2),4,0}};
     k_real q[]={(k_real)(pi/2),(k_real)(pi/2)};
-    k_model m{}; ASSERT_EQ(k_model_init(&m,js,2),K_OK);
+    TestModel m{}; ASSERT_EQ(test_model_init(&m,js,2),K_OK);
     k_transform out{};
     ASSERT_EQ(k_forward(&m,q,2,&out),K_OK);
     k_transform expected={{{0,1,0,4},{0,0,1,1},{1,0,0,5},{0,0,0,1}}};
@@ -130,12 +130,13 @@ TEST(Forward, MixedJointsAndOffsets)
 {
     k_dh_joint js[]={{K_REVOLUTE,1,0,0,(k_real)(pi/4)},
                      {K_PRISMATIC,0,0,2,0}};
-    k_real q[]={(k_real)(pi/4),3}; k_model m{};
-    ASSERT_EQ(k_model_init(&m,js,2),K_OK);
+    k_real q[]={(k_real)(pi/4),3}; TestModel m{};
+    ASSERT_EQ(test_model_init(&m,js,2),K_OK);
     k_transform out{}; ASSERT_EQ(k_forward(&m,q,2,&out),K_OK);
     k_transform expected={{{0,-1,0,0},{1,0,0,1},{0,0,1,5},{0,0,0,1}}};
     matrix_near(out,expected);
     js[0].theta_offset=0; q[0]=(k_real)(pi/2);
+    ASSERT_EQ(test_model_init(&m,js,2),K_OK);
     k_transform shifted{}; ASSERT_EQ(k_forward(&m,q,2,&shifted),K_OK);
     matrix_near(out,shifted);
 }
@@ -143,8 +144,8 @@ TEST(Forward, MixedJointsAndOffsets)
 TEST(Forward, BaseToolAndFrameIndexing)
 {
     k_dh_joint js[]={joint(1),joint(1),joint(1)};
-    k_real q[]={(k_real)(pi/2),0,0}; k_model m{};
-    ASSERT_EQ(k_model_init(&m,js,3),K_OK);
+    k_real q[]={(k_real)(pi/2),0,0}; TestModel m{};
+    ASSERT_EQ(test_model_init(&m,js,3),K_OK);
     m.world_base={{{0,-1,0,1},{1,0,0,2},{0,0,1,3},{0,0,0,1}}};
     m.last_tool.m[0][3]=1;
     std::array<k_transform,6> frames,work;
@@ -165,8 +166,8 @@ TEST(Forward, BaseToolAndFrameIndexing)
 
 TEST(Forward, InputErrorsLeaveBothBuffersUntouched)
 {
-    auto j=joint(); k_real q=0; k_model m{};
-    ASSERT_EQ(k_model_init(&m,&j,1),K_OK);
+    auto j=joint(); k_real q=0; TestModel m{};
+    ASSERT_EQ(test_model_init(&m,&j,1),K_OK);
     auto out=sentinel(),before=out;
     EXPECT_EQ(k_forward(nullptr,&q,1,&out),K_INVALID_ARGUMENT);
     EXPECT_EQ(k_forward(&m,nullptr,1,&out),K_INVALID_ARGUMENT);
@@ -196,7 +197,7 @@ TEST(Forward, NumericErrorsAtEveryJointPreserveOutput)
         k_dh_joint js[]={joint(),joint(),joint()}; k_real q[]={0,0,0};
         js[bad].type=type; q[bad]=std::numeric_limits<k_real>::max();
         if(type==K_REVOLUTE) js[bad].theta_offset=q[bad]; else js[bad].d_offset=q[bad];
-        k_model m{}; ASSERT_EQ(k_model_init(&m,js,3),K_OK);
+        TestModel m{}; ASSERT_EQ(test_model_init(&m,js,3),K_OK);
         auto out=sentinel(),before=out;
         EXPECT_EQ(k_forward(&m,q,3,&out),K_NUMERIC_ERROR); same_bytes(out,before);
         std::array<k_transform,5> frames,work; frames.fill(sentinel()); auto fb=frames;
@@ -207,8 +208,8 @@ TEST(Forward, NumericErrorsAtEveryJointPreserveOutput)
 
 TEST(Forward, ToolOverflowPreservesCompleteOutput)
 {
-    auto j=joint(); k_model m{}; k_real q=0;
-    ASSERT_EQ(k_model_init(&m,&j,1),K_OK);
+    auto j=joint(); TestModel m{}; k_real q=0;
+    ASSERT_EQ(test_model_init(&m,&j,1),K_OK);
     m.world_base.m[0][3]=std::numeric_limits<k_real>::max();
     m.last_tool.m[0][3]=m.world_base.m[0][3];
     std::array<k_transform,3> frames,work; frames.fill(sentinel()); auto fb=frames;
@@ -219,14 +220,14 @@ TEST(Forward, ToolOverflowPreservesCompleteOutput)
 TEST(Forward, LongChainAndLargeAnglesControlled)
 {
     std::vector<k_dh_joint> js(1024,joint((k_real)0.01));
-    std::vector<k_real> q(1024,(k_real)0.03); k_model m{};
-    ASSERT_EQ(k_model_init(&m,js.data(),js.size()),K_OK);
+    std::vector<k_real> q(1024,(k_real)0.03); TestModel m{};
+    ASSERT_EQ(test_model_init(&m,js.data(),js.size()),K_OK);
     auto out=sentinel(),before=out;
     auto status=k_forward(&m,q.data(),q.size(),&out);
     ASSERT_TRUE(status==K_OK || status==K_NUMERIC_ERROR);
     if(status==K_OK) EXPECT_EQ(k_transform_validate(&out),K_OK); else same_bytes(out,before);
     js.resize(1); q.resize(1); q[0]=(k_real)1e6;
-    ASSERT_EQ(k_model_init(&m,js.data(),1),K_OK);
+    ASSERT_EQ(test_model_init(&m,js.data(),1),K_OK);
     ASSERT_EQ(k_forward(&m,q.data(),1,&out),K_OK);
     EXPECT_NEAR(out.m[0][0],std::cos((double)q[0]),rotation_tolerance);
 }

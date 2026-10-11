@@ -11,10 +11,18 @@ CC = os.environ.get("CC", "cc")
 CXX = os.environ.get("CXX", "c++")
 
 CONSUMER = '''#include <manipulator/forward.h>
+#include <manipulator/transform.h>
 int main(void) {
     k_dh_joint joints[3] = {{K_REVOLUTE,1,0,0,0}, {K_REVOLUTE,2,0,0,0}, {K_REVOLUTE,3,0,0,0}};
-    k_real q[3] = {0,0,0}; k_model model; k_transform out;
-    if(k_model_init(&model,joints,3)!=K_OK) return 1;
+    k_real q[3] = {0,0,0}; k_model model; k_transform out, unit; k_joint_config storage[3];
+    if(k_model_begin(&model,storage,3,3)!=K_OK) return 1;
+    k_joint_limits limits = {K_UNBOUNDED,0,0};
+    for(size_t i=0;i<3;++i) {
+        if(k_model_set_joint(&model,i,&joints[i])!=K_OK) return 4;
+        if(k_model_set_limits(&model,i,&limits)!=K_OK) return 5;
+    }
+    if(k_transform_identity(&unit)!=K_OK || k_model_set_base(&model,&unit)!=K_OK
+        || k_model_set_tool(&model,&unit)!=K_OK || k_model_finalize(&model)!=K_OK) return 6;
     if(k_forward(&model,q,3,&out)!=K_OK) return 2;
     return out.m[0][3]==6 && out.m[1][3]==0 ? 0 : 3;
 }
@@ -65,7 +73,7 @@ def test_relocated_install_and_external_consumers(profile, tmp_path, custom_dirs
     (source/"main.cpp").write_text(CONSUMER)
     (source/"CMakeLists.txt").write_text('''cmake_minimum_required(VERSION 3.20)
 project(consumer LANGUAGES C CXX)
-find_package(manipulator 0.1 CONFIG REQUIRED)
+find_package(manipulator 0.2 CONFIG REQUIRED)
 add_executable(c_consumer main.c)
 add_executable(cpp_consumer main.cpp)
 target_link_libraries(c_consumer PRIVATE manipulator::kinematics)
@@ -120,7 +128,7 @@ find_package(manipulator {requested_version} CONFIG REQUIRED)
     result=subprocess.run(["cmake","-S",str(source),"-B",str(tmp_path/"build"),
                            f"-DCMAKE_PREFIX_PATH={prefix}"],capture_output=True,text=True,timeout=30)
     assert result.returncode!=0, "An incompatible development API version was accepted"
-    assert "0.1.0" in result.stderr
+    assert "0.2.0" in result.stderr
     assert "not accepted" in result.stderr
 
 

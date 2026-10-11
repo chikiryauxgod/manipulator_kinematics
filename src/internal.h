@@ -59,6 +59,8 @@ static inline int k_count_valid(size_t n)
 }
 
 k_status k_internal_compose(const k_transform *a, const k_transform *b, k_transform *out);
-k_status k_internal_joints_validate(const k_dh_joint *joints, size_t n);
+k_status k_internal_positions_validate(const k_model *model, const k_real *joint_positions, size_t count);
+k_status k_internal_walk(const k_model *model, const k_real *joint_positions,
+                         k_transform *tool, k_transform *frames);
 k_status k_internal_dh(const k_dh_joint *joint, k_real q, k_transform *out);
 #endif

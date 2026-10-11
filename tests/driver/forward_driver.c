@@ -1,4 +1,4 @@
-#include <manipulator/forward.h>
+#include "../support/model_setup.h"
 #include <errno.h>
 #include <float.h>
 #include <locale.h>
@@ -15,6 +15,7 @@
 
 static char line_buffer[LINE_LIMIT + 2];
 static k_dh_joint joints[K_DRIVER_MAX_JOINTS];
+static k_joint_config storage[K_DRIVER_MAX_JOINTS];
 static k_real coordinates[K_DRIVER_MAX_JOINTS];
 
 static char *token(char **cursor)
@@ -80,6 +81,13 @@ static const char *parse_count(char *text, size_t *out)
 static const char *status_name(k_status status)
 {
     switch (status) {
+    case K_NOT_READY: return "K_NOT_READY";
+    case K_INVALID_STATE: return "K_INVALID_STATE";
+    case K_INCOMPLETE_CONFIGURATION: return "K_INCOMPLETE_CONFIGURATION";
+    case K_JOINT_LIMIT: return "K_JOINT_LIMIT";
+    case K_INVALID_OPTIONS: return "K_INVALID_OPTIONS";
+    case K_NO_CONVERGENCE: return "K_NO_CONVERGENCE";
+    case K_STALLED: return "K_STALLED";
     case K_OK: return "K_OK";
     case K_INVALID_ARGUMENT: return "K_INVALID_ARGUMENT";
     case K_INVALID_MODEL: return "K_INVALID_MODEL";
@@ -122,9 +130,8 @@ static const char *request(char *line, k_transform *result)
             }
     if (token(&cursor)) return "PARSE_ERROR";
     k_model model;
-    k_status status=k_model_init(&model,joints,n);
+    k_status status=test_setup(&model,storage,K_DRIVER_MAX_JOINTS,joints,n,&base,&tool);
     if (status!=K_OK) return status_name(status);
-    model.world_base=base; model.last_tool=tool;
     status=k_forward(&model,coordinates,n,result);
     return status==K_OK ? NULL : status_name(status);
 }

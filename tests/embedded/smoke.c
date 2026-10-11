@@ -1,4 +1,4 @@
-#include <manipulator/forward.h>
+#include "../support/model_setup.h"
 #include <manipulator/transform.h>
 #include <float.h>
 #include <math.h>
@@ -7,6 +7,8 @@
 
 static k_dh_joint joints[64];
 static k_real q[64];
+static k_joint_config storage[64];
+static k_transform unit;
 static k_transform frames[66], work[66];
 extern unsigned char _stack_bottom, _stack_top;
 
@@ -51,17 +53,18 @@ static int near(k_real a, k_real b)
 int main(void)
 {
     k_model model;
+    if(k_transform_identity(&unit)!=K_OK) return 20;
     k_transform out;
     const k_real pi=(k_real)3.14159265358979323846;
     joints[0]=(k_dh_joint){K_REVOLUTE,0,pi/2,(k_real)0.1,0};
     joints[1]=(k_dh_joint){K_REVOLUTE,(k_real)0.3,0,0,0};
     joints[2]=(k_dh_joint){K_REVOLUTE,(k_real)0.2,0,0,0};
     q[2]=pi/2;
-    if(k_model_init(&model,joints,3)!=K_OK || k_forward(&model,q,3,&out)!=K_OK) return 1;
+    if(test_setup(&model,storage,64,joints,3,&unit,&unit)!=K_OK || k_forward(&model,q,3,&out)!=K_OK) return 1;
     if(!near(out.m[0][3],(k_real)0.3) || !near(out.m[1][3],0) || !near(out.m[2][3],(k_real)0.3)) return 2;
     joints[0]=(k_dh_joint){K_REVOLUTE,1,0,0,0};
     joints[1]=(k_dh_joint){K_PRISMATIC,0,0,2,0}; q[0]=pi/2; q[1]=3;
-    if(k_model_init(&model,joints,2)!=K_OK) return 3;
+    if(test_setup(&model,storage,64,joints,2,&unit,&unit)!=K_OK) return 3;
     model.world_base.m[2][3]=10; model.last_tool.m[0][3]=2;
     if(k_forward_frames(&model,q,2,frames,66,work,66)!=K_OK) return 4;
     if(!near(frames[3].m[0][3],0) || !near(frames[3].m[1][3],3) || !near(frames[3].m[2][3],15)) return 5;
@@ -79,14 +82,15 @@ int main(void)
     k_real largest=DBL_MAX;
 #endif
     joints[0]=(k_dh_joint){K_PRISMATIC,0,0,0,0}; q[0]=sub;
-    if(k_model_init(&model,joints,1)!=K_OK || k_forward(&model,q,1,&out)!=K_OK || out.m[2][3]!=sub) return 8;
+    if(test_setup(&model,storage,64,joints,1,&unit,&unit)!=K_OK || k_forward(&model,q,1,&out)!=K_OK || out.m[2][3]!=sub) return 8;
     joints[0].d_offset=largest; q[0]=largest;
+    if(test_setup(&model,storage,64,joints,1,&unit,&unit)!=K_OK) return 21;
     if(k_forward(&model,q,1,&out)!=K_NUMERIC_ERROR) return 9;
     for(unsigned i=0;i<64;++i) { joints[i]=(k_dh_joint){K_REVOLUTE,(k_real)0.1,0,0,0}; q[i]=0; }
     const unsigned sizes[]={3,6,64};
     for(unsigned k=0;k<3;++k) {
         unsigned n=sizes[k];
-        if(k_model_init(&model,joints,n)!=K_OK) return 10;
+        if(test_setup(&model,storage,64,joints,n,&unit,&unit)!=K_OK) return 10;
         fill_stack();
         if(k_forward_frames(&model,q,n,frames,66,work,66)!=K_OK) return 11;
         unsigned used=stack_used();

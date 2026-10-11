@@ -7,24 +7,36 @@
 #define K_USE_FLOAT @K_USE_FLOAT@
 #endif
 #define K_VERSION_MAJOR 0
-#define K_VERSION_MINOR 1
+#define K_VERSION_MINOR 2
 #define K_VERSION_PATCH 0
-#define K_ABI_VERSION 1
+#define K_ABI_VERSION 2
 #if K_USE_FLOAT
-#define k_model_init k_v1_f32_model_init
-#define k_model_validate k_v1_f32_model_validate
-#define k_transform_identity k_v1_f32_transform_identity
-#define k_transform_validate k_v1_f32_transform_validate
-#define k_transform_compose k_v1_f32_transform_compose
-#define k_forward k_v1_f32_forward
-#define k_forward_frames k_v1_f32_forward_frames
+
+#define k_model_validate k_v2_f32_model_validate
+#define k_model_begin k_v2_f32_model_begin
+#define k_model_set_joint k_v2_f32_model_set_joint
+#define k_model_set_limits k_v2_f32_model_set_limits
+#define k_model_set_base k_v2_f32_model_set_base
+#define k_model_set_tool k_v2_f32_model_set_tool
+#define k_model_finalize k_v2_f32_model_finalize
+#define k_transform_identity k_v2_f32_transform_identity
+#define k_transform_validate k_v2_f32_transform_validate
+#define k_transform_compose k_v2_f32_transform_compose
+#define k_forward k_v2_f32_forward
+#define k_forward_frames k_v2_f32_forward_frames
 #else
-#define k_model_init k_v1_f64_model_init
-#define k_model_validate k_v1_f64_model_validate
-#define k_transform_identity k_v1_f64_transform_identity
-#define k_transform_validate k_v1_f64_transform_validate
-#define k_transform_compose k_v1_f64_transform_compose
-#define k_forward k_v1_f64_forward
-#define k_forward_frames k_v1_f64_forward_frames
+
+#define k_model_validate k_v2_f64_model_validate
+#define k_model_begin k_v2_f64_model_begin
+#define k_model_set_joint k_v2_f64_model_set_joint
+#define k_model_set_limits k_v2_f64_model_set_limits
+#define k_model_set_base k_v2_f64_model_set_base
+#define k_model_set_tool k_v2_f64_model_set_tool
+#define k_model_finalize k_v2_f64_model_finalize
+#define k_transform_identity k_v2_f64_transform_identity
+#define k_transform_validate k_v2_f64_transform_validate
+#define k_transform_compose k_v2_f64_transform_compose
+#define k_forward k_v2_f64_forward
+#define k_forward_frames k_v2_f64_forward_frames
 #endif
 #endif
