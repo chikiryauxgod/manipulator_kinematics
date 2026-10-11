@@ -30,10 +30,15 @@ def test_cross_link_qemu_and_no_heap(profile, request, tmp_path):
     (build/"qemu-result.txt").write_text(transcript)
     assert result.returncode==0,transcript
     assert "SMOKE_OK" in transcript
-    stacks={int(n):int(size) for n,size in re.findall(r"STACK (\d+) (\d+)",transcript)}
+    stacks={int(n):int(size) for n,size in re.findall(r"(?m)^STACK (\d+) (\d+)",transcript)}
     assert set(stacks)=={3,6,64}
     assert max(stacks.values())-min(stacks.values())<=128
     assert max(stacks.values())<16384
+    assert "IK_SMOKE_OK" in transcript
+    ik_stacks={int(n):int(size) for n,size in re.findall(r"(?m)^IK_STACK (\d+) (\d+)",transcript)}
+    assert set(ik_stacks)=={3,6,64}
+    assert max(ik_stacks.values())-min(ik_stacks.values())<=128
+    assert max(ik_stacks.values())<16384
     prefix=Path(compiler).parent
     nm=prefix/"arm-none-eabi-nm"
     size=prefix/"arm-none-eabi-size"
@@ -42,7 +47,7 @@ def test_cross_link_qemu_and_no_heap(profile, request, tmp_path):
     (build/"symbols.txt").write_text(symbols)
     (build/"size.txt").write_text(run_checked([size,elf]).stdout)
     reports=list((build/"CMakeFiles/manipulator_kinematics.dir").rglob("*.su"))
-    assert len(reports)==4
+    assert len(reports)==8
     for report in reports:
         for line in report.read_text().splitlines():
             assert line.split()[-1]=="static",line

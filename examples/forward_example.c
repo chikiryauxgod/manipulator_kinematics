@@ -1,4 +1,5 @@
 #include <manipulator/forward.h>
+#include <manipulator/transform.h>
 #include <stdio.h>
 
 int main(void)

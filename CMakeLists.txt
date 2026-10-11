@@ -21,7 +21,8 @@ option(K_BUILD_EMBEDDED_SMOKE "Build Cortex-M4 smoke ELF" OFF)
 configure_file(cmake/config.h.in generated/manipulator/config.h @ONLY)
 
 add_library(manipulator_kinematics STATIC
-    src/transform.c src/model.c src/dh.c src/forward.c)
+    src/transform.c src/model.c src/dh.c src/forward.c
+    src/differential.c src/linear3.c src/inverse_dls.c src/inverse.c)
 add_library(manipulator::kinematics ALIAS manipulator_kinematics)
 set_target_properties(manipulator_kinematics PROPERTIES
     EXPORT_NAME kinematics OUTPUT_NAME manipulator_kinematics_${K_PROFILE}
@@ -51,7 +52,7 @@ if(K_BUILD_UNIT_TESTS)
     enable_testing()
     find_package(GTest 1.14 CONFIG REQUIRED)
     add_executable(manipulator_unit_tests tests/unit/test_transform.cpp
-        tests/unit/test_model.cpp tests/unit/test_forward.cpp)
+        tests/unit/test_model.cpp tests/unit/test_forward.cpp tests/unit/test_inverse.cpp)
     set_target_properties(manipulator_unit_tests PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
     target_link_libraries(manipulator_unit_tests PRIVATE manipulator::kinematics GTest::gtest_main)
     include(GoogleTest)
@@ -70,6 +71,9 @@ if(K_BUILD_TEST_DRIVER)
         CONTENT "$<TARGET_FILE:manipulator_fk_driver>\n")
 endif()
 if(K_BUILD_EXAMPLES)
+    add_executable(manipulator_inverse_example examples/inverse_example.c)
+    target_link_libraries(manipulator_inverse_example PRIVATE manipulator::kinematics)
+    set_target_properties(manipulator_inverse_example PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)
     add_executable(manipulator_example examples/forward_example.c)
     target_link_libraries(manipulator_example PRIVATE manipulator::kinematics)
     set_target_properties(manipulator_example PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)

@@ -48,7 +48,7 @@ jobs:
         env:
           CC: clang-18
           CXX: clang++-18
-        run: .venv/bin/python -m pytest tests/integration/test_forward_stream.py --sanitizers --basetemp=build-stream --junitxml=build-stream/results.xml -q
+        run: .venv/bin/python -m pytest tests/integration/test_forward_stream.py tests/integration/test_inverse_stream.py --sanitizers --basetemp=build-stream --junitxml=build-stream/results.xml -q
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

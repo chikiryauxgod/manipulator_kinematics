@@ -17,12 +17,18 @@ _Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 
                "binary64 required");
 #if K_USE_FLOAT
 #define K_MAX FLT_MAX
+#define K_EPSILON FLT_EPSILON
+#define K_SQRT sqrtf
+#define K_HYPOT hypotf
 #define K_TOL ((k_real)2e-5)
 #define K_SIN sinf
 #define K_COS cosf
 #define K_ABS fabsf
 #else
 #define K_MAX DBL_MAX
+#define K_EPSILON DBL_EPSILON
+#define K_SQRT sqrt
+#define K_HYPOT hypot
 #define K_TOL ((k_real)2e-12)
 #define K_SIN sin
 #define K_COS cos
@@ -59,8 +65,12 @@ static inline int k_count_valid(size_t n)
 }
 
 k_status k_internal_compose(const k_transform *a, const k_transform *b, k_transform *out);
-k_status k_internal_positions_validate(const k_model *model, const k_real *joint_positions, size_t count);
-k_status k_internal_walk(const k_model *model, const k_real *joint_positions,
-                         k_transform *tool, k_transform *frames);
+k_status k_internal_positions_validate(const k_model *model, const k_real *joint_positions,
+                                       size_t count);
+k_status k_internal_walk(const k_model *model, const k_real *joint_positions, k_transform *tool,
+                         k_transform *frames);
 k_status k_internal_dh(const k_dh_joint *joint, k_real q, k_transform *out);
+k_status k_internal_linear3(k_real matrix[3][3], const k_real rhs[3], k_real result[3]);
+k_status k_internal_jacobian(const k_model *model, const k_real *joint_positions,
+                             const k_transform *tool, k_real *columns);
 #endif

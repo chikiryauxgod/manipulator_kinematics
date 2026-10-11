@@ -31,7 +31,7 @@ int main(void) {
 
 @pytest.mark.parametrize("language", ["c", "c++"])
 def test_headers_are_self_contained(built_profile, tmp_path, language):
-    for header in ["types", "transform", "model", "forward"]:
+    for header in ["types", "transform", "model", "forward", "inverse"]:
         source=tmp_path/f"{header}.c"
         source.write_text(f"#include <manipulator/{header}.h>\n")
         run_checked([CC if language=="c" else CXX, "-x", language,
@@ -87,7 +87,11 @@ file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/consumers-$<CONFIG>.txt"
                       if custom_dirs else f"-DCMAKE_PREFIX_PATH={moved}")
     run_checked(["cmake","-S",source,"-B",build,"-DCMAKE_BUILD_TYPE=Release",package_location])
     run_checked(["cmake","--build",build,"--config","Release","--parallel","2"])
-    for exe in (build/"consumers-Release.txt").read_text().splitlines(): run_checked([exe])
+    for exe in (build/"consumers-Release.txt").read_text().splitlines():
+        run_checked([exe])
+        symbols=run_checked(["nm",exe]).stdout
+        assert "inverse_position" not in symbols
+        assert "k_internal_dls" not in symbols
 
 
 def test_add_subdirectory_is_c_only(built_profile, tmp_path):
