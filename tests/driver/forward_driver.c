@@ -26,8 +26,8 @@ static k_real coordinates[K_DRIVER_MAX_JOINTS];
 static k_joint_limits joint_limits[K_DRIVER_MAX_JOINTS];
 static k_real joint_scales[K_DRIVER_MAX_JOINTS], max_joint_steps[K_DRIVER_MAX_JOINTS];
 static k_real inverse_workspace[6u * K_DRIVER_MAX_JOINTS], inverse_output[K_DRIVER_MAX_JOINTS];
-typedef struct
-{
+
+typedef struct {
     int inverse;
     uint32_t request_id;
     size_t count;
@@ -35,13 +35,11 @@ typedef struct
     k_ik_report report;
 } response;
 
-static const char *parse_id(const char *text, uint32_t *result)
-{
+static const char* parse_id(const char* text, uint32_t* result) {
     if (!text || !*text)
         return "PARSE_ERROR";
     uint32_t value = 0;
-    for (const char *p = text; *p; ++p)
-    {
+    for (const char* p = text; *p; ++p) {
         if (*p < '0' || *p > '9')
             return "PARSE_ERROR";
         unsigned next = (unsigned)(*p - '0');
@@ -53,17 +51,15 @@ static const char *parse_id(const char *text, uint32_t *result)
     return NULL;
 }
 
-static char *token(char **cursor)
-{
-    char *p = *cursor;
+static char* token(char** cursor) {
+    char* p = *cursor;
     while (*p == ' ' || *p == '\t')
         ++p;
-    if (!*p)
-    {
+    if (!*p) {
         *cursor = p;
         return NULL;
     }
-    char *start = p;
+    char* start = p;
     while (*p && *p != ' ' && *p != '\t')
         ++p;
     if (*p)
@@ -71,51 +67,44 @@ static char *token(char **cursor)
     *cursor = p;
     return start;
 }
-static int digit(char c)
-{
+
+static int digit(char c) {
     return c >= '0' && c <= '9';
 }
-static const char *parse_real(char *text, k_real *out)
-{
+
+static const char* parse_real(char* text, k_real* out) {
     if (!text)
         return "PARSE_ERROR";
-    if (strcmp(text, "nan") == 0)
-    {
+    if (strcmp(text, "nan") == 0) {
         *out = (k_real)NAN;
         return NULL;
     }
-    if (strcmp(text, "inf") == 0 || strcmp(text, "+inf") == 0)
-    {
+    if (strcmp(text, "inf") == 0 || strcmp(text, "+inf") == 0) {
         *out = (k_real)INFINITY;
         return NULL;
     }
-    if (strcmp(text, "-inf") == 0)
-    {
+    if (strcmp(text, "-inf") == 0) {
         *out = -(k_real)INFINITY;
         return NULL;
     }
-    const char *p = text;
+    const char* p = text;
     if (*p == '+' || *p == '-')
         ++p;
     size_t digits = 0;
-    while (digit(*p))
-    {
+    while (digit(*p)) {
         ++p;
         ++digits;
     }
-    if (*p == '.')
-    {
+    if (*p == '.') {
         ++p;
-        while (digit(*p))
-        {
+        while (digit(*p)) {
             ++p;
             ++digits;
         }
     }
     if (!digits)
         return "PARSE_ERROR";
-    if (*p == 'e' || *p == 'E')
-    {
+    if (*p == 'e' || *p == 'E') {
         ++p;
         if (*p == '+' || *p == '-')
             ++p;
@@ -126,7 +115,7 @@ static const char *parse_real(char *text, k_real *out)
     }
     if (*p)
         return "PARSE_ERROR";
-    char *end = NULL;
+    char* end = NULL;
     errno = 0;
 #if K_USE_FLOAT
     k_real value = strtof(text, &end);
@@ -140,13 +129,12 @@ static const char *parse_real(char *text, k_real *out)
     *out = value;
     return NULL;
 }
-static const char *parse_count(char *text, size_t *out)
-{
+
+static const char* parse_count(char* text, size_t* out) {
     if (!text || *text < '1' || *text > '9')
         return "PARSE_ERROR";
     size_t n = 0;
-    for (const char *p = text; *p; ++p)
-    {
+    for (const char* p = text; *p; ++p) {
         if (!digit(*p))
             return "PARSE_ERROR";
         unsigned d = (unsigned)(*p - '0');
@@ -159,10 +147,9 @@ static const char *parse_count(char *text, size_t *out)
     *out = n;
     return NULL;
 }
-static const char *status_name(k_status status)
-{
-    switch (status)
-    {
+
+static const char* status_name(k_status status) {
+    switch (status) {
     case K_NOT_READY:
         return "K_NOT_READY";
     case K_INVALID_STATE:
@@ -196,29 +183,27 @@ static const char *status_name(k_status status)
     }
     return "INTERNAL_ERROR";
 }
-static const char *request(char *line, response *result)
-{
-    char *cursor = line;
-    char *command = token(&cursor);
+
+static const char* request(char* line, response* result) {
+    char* cursor = line;
+    char* command = token(&cursor);
     if (!command)
         return "PARSE_ERROR";
     result->inverse = strcmp(command, "IK") == 0;
     if (!result->inverse && strcmp(command, "FK") != 0)
         return "PARSE_ERROR";
     size_t n;
-    const char *error = parse_count(token(&cursor), &n);
+    const char* error = parse_count(token(&cursor), &n);
     if (error)
         return error;
     result->count = n;
-    if (result->inverse)
-    {
+    if (result->inverse) {
         error = parse_id(token(&cursor), &result->request_id);
         if (error)
             return error;
     }
-    for (size_t i = 0; i < n; ++i)
-    {
-        char *type = token(&cursor);
+    for (size_t i = 0; i < n; ++i) {
+        char* type = token(&cursor);
         if (!type)
             return "PARSE_ERROR";
         if (strcmp(type, "R") == 0)
@@ -227,17 +212,15 @@ static const char *request(char *line, response *result)
             joints[i].type = K_PRISMATIC;
         else
             return "PARSE_ERROR";
-        k_real *fields[] = {&joints[i].a, &joints[i].alpha, &joints[i].d_offset,
+        k_real* fields[] = {&joints[i].a, &joints[i].alpha, &joints[i].d_offset,
                             &joints[i].theta_offset, &coordinates[i]};
-        for (size_t f = 0; f < 5; ++f)
-        {
+        for (size_t f = 0; f < 5; ++f) {
             error = parse_real(token(&cursor), fields[f]);
             if (error)
                 return error;
         }
-        if (result->inverse)
-        {
-            char *mode = token(&cursor);
+        if (result->inverse) {
+            char* mode = token(&cursor);
             if (!mode)
                 return "PARSE_ERROR";
             if (strcmp(mode, "B") == 0)
@@ -246,10 +229,9 @@ static const char *request(char *line, response *result)
                 joint_limits[i].mode = K_UNBOUNDED;
             else
                 return "PARSE_ERROR";
-            k_real *settings[] = {&joint_limits[i].min, &joint_limits[i].max, &joint_scales[i],
+            k_real* settings[] = {&joint_limits[i].min, &joint_limits[i].max, &joint_scales[i],
                                   &max_joint_steps[i]};
-            for (size_t f = 0; f < 4; ++f)
-            {
+            for (size_t f = 0; f < 4; ++f) {
                 error = parse_real(token(&cursor), settings[f]);
                 if (error)
                     return error;
@@ -257,17 +239,15 @@ static const char *request(char *line, response *result)
         }
     }
     k_transform base, tool;
-    k_transform *matrices[] = {&base, &tool};
+    k_transform* matrices[] = {&base, &tool};
     for (size_t t = 0; t < 2; ++t)
         for (size_t i = 0; i < 4; ++i)
-            for (size_t j = 0; j < 4; ++j)
-            {
+            for (size_t j = 0; j < 4; ++j) {
                 error = parse_real(token(&cursor), &matrices[t]->m[i][j]);
                 if (error)
                     return error;
             }
-    if (!result->inverse)
-    {
+    if (!result->inverse) {
         if (token(&cursor))
             return "PARSE_ERROR";
         k_model model;
@@ -278,11 +258,10 @@ static const char *request(char *line, response *result)
     }
     k_vec3 target;
     k_ik_options options = {0};
-    k_real *values[] = {
+    k_real* values[] = {
         &target.x,       &target.y, &target.z, &options.position_tolerance, &options.length_scale,
         &options.damping};
-    for (size_t i = 0; i < 6; ++i)
-    {
+    for (size_t i = 0; i < 6; ++i) {
         error = parse_real(token(&cursor), values[i]);
         if (error)
             return error;
@@ -302,8 +281,7 @@ static const char *request(char *line, response *result)
     options.joint_count = n;
     k_model model;
     k_status status = k_model_begin(&model, storage, K_DRIVER_MAX_JOINTS, n);
-    for (size_t i = 0; status == K_OK && i < n; ++i)
-    {
+    for (size_t i = 0; status == K_OK && i < n; ++i) {
         status = k_model_set_joint(&model, i, &joints[i]);
         if (status == K_OK)
             status = k_model_set_limits(&model, i, &joint_limits[i]);
@@ -321,8 +299,7 @@ static const char *request(char *line, response *result)
     return status == K_OK ? NULL : status_name(status);
 }
 
-static int respond(size_t length, int too_long, int bad_byte, int has_lf)
-{
+static int respond(size_t length, int too_long, int bad_byte, int has_lf) {
     if (has_lf && length && line_buffer[length - 1] == '\r')
         --length;
     if (length > LINE_LIMIT)
@@ -331,21 +308,16 @@ static int respond(size_t length, int too_long, int bad_byte, int has_lf)
     if (memchr(line_buffer, '\r', length))
         bad_byte = 1;
     response out = {0};
-    const char *error = too_long   ? "REQUEST_TOO_LARGE"
+    const char* error = too_long   ? "REQUEST_TOO_LARGE"
                         : bad_byte ? "PARSE_ERROR"
                                    : request(line_buffer, &out);
-    if (error)
-    {
-        if (out.inverse)
-        {
+    if (error) {
+        if (out.inverse) {
             if (printf("ERR IK %lu %s\n", (unsigned long)out.request_id, error) < 0)
                 return 0;
-        }
-        else if (printf("ERR %s\n", error) < 0)
+        } else if (printf("ERR %s\n", error) < 0)
             return 0;
-    }
-    else if (out.inverse)
-    {
+    } else if (out.inverse) {
         if (printf("OK IK %lu %zu", (unsigned long)out.request_id, out.count) < 0)
             return 0;
         for (size_t i = 0; i < out.count; ++i)
@@ -354,9 +326,7 @@ static int respond(size_t length, int too_long, int bad_byte, int has_lf)
         if (printf(" %.*g %zu %zu\n", PRINT_DIGITS, (double)out.report.residual,
                    out.report.iteration_attempts, out.report.fk_evaluations) < 0)
             return 0;
-    }
-    else
-    {
+    } else {
         if (printf("OK") < 0)
             return 0;
 #if K_USE_FLOAT
@@ -373,25 +343,21 @@ static int respond(size_t length, int too_long, int bad_byte, int has_lf)
     }
     return fflush(stdout) == 0;
 }
-int main(void)
-{
+
+int main(void) {
     if (!setlocale(LC_NUMERIC, "C"))
         return 1;
     size_t length = 0;
     int too_long = 0, bad_byte = 0, received = 0, ch;
-    while ((ch = getchar()) != EOF)
-    {
-        if (ch == '\n')
-        {
+    while ((ch = getchar()) != EOF) {
+        if (ch == '\n') {
             if (!respond(length, too_long, bad_byte, 1))
                 return 1;
             length = 0;
             too_long = 0;
             bad_byte = 0;
             received = 0;
-        }
-        else
-        {
+        } else {
             received = 1;
             if ((ch < 32 && ch != '\t' && ch != '\r') || ch > 126)
                 bad_byte = 1;
@@ -401,8 +367,7 @@ int main(void)
                 too_long = 1;
         }
     }
-    if (ferror(stdin))
-    {
+    if (ferror(stdin)) {
         fputs("stdin read failure\n", stderr);
         return 1;
     }

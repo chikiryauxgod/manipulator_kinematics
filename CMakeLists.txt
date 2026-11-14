@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
-project(manipulator VERSION 0.2.0 LANGUAGES C)
+project(
+    manipulator
+    VERSION 0.2.0
+    LANGUAGES C)
 include(GNUInstallDirs)
 
-set(K_REAL_TYPE "double" CACHE STRING "Arithmetic profile: float or double")
+set(K_REAL_TYPE
+    "double"
+    CACHE STRING "Arithmetic profile: float or double")
 set_property(CACHE K_REAL_TYPE PROPERTY STRINGS float double)
 if(K_REAL_TYPE STREQUAL "float")
     set(K_USE_FLOAT 1)
@@ -20,23 +25,36 @@ option(K_ENABLE_SANITIZERS "Enable host address/undefined sanitizers" OFF)
 option(K_BUILD_EMBEDDED_SMOKE "Build Cortex-M4 smoke ELF" OFF)
 configure_file(cmake/config.h.in generated/manipulator/config.h @ONLY)
 
-add_library(manipulator_kinematics STATIC
-    src/transform.c src/model.c src/dh.c src/forward.c
-    src/differential.c src/linear3.c src/inverse_dls.c src/inverse.c)
+add_library(
+    manipulator_kinematics STATIC
+    src/transform.c
+    src/model.c
+    src/dh.c
+    src/forward.c
+    src/differential.c
+    src/linear3.c
+    src/inverse_dls.c
+    src/inverse.c)
 add_library(manipulator::kinematics ALIAS manipulator_kinematics)
-set_target_properties(manipulator_kinematics PROPERTIES
-    EXPORT_NAME kinematics OUTPUT_NAME manipulator_kinematics_${K_PROFILE}
-    C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)
+set_target_properties(
+    manipulator_kinematics
+    PROPERTIES EXPORT_NAME kinematics
+               OUTPUT_NAME manipulator_kinematics_${K_PROFILE}
+               C_STANDARD 11
+               C_STANDARD_REQUIRED YES
+               C_EXTENSIONS NO)
 target_compile_features(manipulator_kinematics PUBLIC c_std_11)
-target_include_directories(manipulator_kinematics PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(
+    manipulator_kinematics
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
+           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 if(NOT MSVC)
     target_link_libraries(manipulator_kinematics PUBLIC m)
 endif()
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(manipulator_kinematics PRIVATE -Wall -Wextra -Wpedantic -Wvla -Werror=vla)
+    target_compile_options(manipulator_kinematics PRIVATE -Wall -Wextra -Wpedantic -Wvla
+                                                          -Werror=vla)
 elseif(MSVC)
     target_compile_options(manipulator_kinematics PRIVATE /W4)
 endif()
@@ -44,61 +62,93 @@ if(K_ENABLE_SANITIZERS)
     if(CMAKE_CROSSCOMPILING OR NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         message(FATAL_ERROR "Sanitizers require GCC/Clang host build")
     endif()
-    target_compile_options(manipulator_kinematics PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_compile_options(manipulator_kinematics PUBLIC -fsanitize=address,undefined
+                                                         -fno-omit-frame-pointer)
     target_link_options(manipulator_kinematics PUBLIC -fsanitize=address,undefined)
 endif()
 if(K_BUILD_UNIT_TESTS)
     enable_language(CXX)
     enable_testing()
     find_package(GTest 1.14 CONFIG REQUIRED)
-    add_executable(manipulator_unit_tests tests/unit/test_transform.cpp
-        tests/unit/test_model.cpp tests/unit/test_forward.cpp tests/unit/test_inverse.cpp)
-    set_target_properties(manipulator_unit_tests PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
+    add_executable(manipulator_unit_tests tests/unit/test_transform.cpp tests/unit/test_model.cpp
+                                          tests/unit/test_forward.cpp tests/unit/test_inverse.cpp)
+    set_target_properties(
+        manipulator_unit_tests
+        PROPERTIES CXX_STANDARD 17
+                   CXX_STANDARD_REQUIRED YES
+                   CXX_EXTENSIONS NO)
     target_link_libraries(manipulator_unit_tests PRIVATE manipulator::kinematics GTest::gtest_main)
     include(GoogleTest)
-    gtest_discover_tests(manipulator_unit_tests XML_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gtest-results")
+    gtest_discover_tests(manipulator_unit_tests XML_OUTPUT_DIR
+                         "${CMAKE_CURRENT_BINARY_DIR}/gtest-results")
 endif()
 if(K_BUILD_TEST_DRIVER)
-    set(K_DRIVER_MAX_JOINTS "64" CACHE STRING "Maximum joints in the host test driver")
+    set(K_DRIVER_MAX_JOINTS
+        "64"
+        CACHE STRING "Maximum joints in the host test driver")
     if(NOT K_DRIVER_MAX_JOINTS MATCHES "^[1-9][0-9]*$")
         message(FATAL_ERROR "K_DRIVER_MAX_JOINTS must be a positive decimal integer")
     endif()
     add_executable(manipulator_fk_driver tests/driver/forward_driver.c)
-    set_target_properties(manipulator_fk_driver PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)
+    set_target_properties(
+        manipulator_fk_driver
+        PROPERTIES C_STANDARD 11
+                   C_STANDARD_REQUIRED YES
+                   C_EXTENSIONS NO)
     target_link_libraries(manipulator_fk_driver PRIVATE manipulator::kinematics)
-    target_compile_definitions(manipulator_fk_driver PRIVATE K_DRIVER_MAX_JOINTS=${K_DRIVER_MAX_JOINTS})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/driver-path-$<CONFIG>.txt"
+    target_compile_definitions(manipulator_fk_driver
+                               PRIVATE K_DRIVER_MAX_JOINTS=${K_DRIVER_MAX_JOINTS})
+    file(
+        GENERATE
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/driver-path-$<CONFIG>.txt"
         CONTENT "$<TARGET_FILE:manipulator_fk_driver>\n")
 endif()
 if(K_BUILD_EXAMPLES)
     add_executable(manipulator_inverse_example examples/inverse_example.c)
     target_link_libraries(manipulator_inverse_example PRIVATE manipulator::kinematics)
-    set_target_properties(manipulator_inverse_example PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)
+    set_target_properties(
+        manipulator_inverse_example
+        PROPERTIES C_STANDARD 11
+                   C_STANDARD_REQUIRED YES
+                   C_EXTENSIONS NO)
     add_executable(manipulator_example examples/forward_example.c)
     target_link_libraries(manipulator_example PRIVATE manipulator::kinematics)
-    set_target_properties(manipulator_example PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)
+    set_target_properties(
+        manipulator_example
+        PROPERTIES C_STANDARD 11
+                   C_STANDARD_REQUIRED YES
+                   C_EXTENSIONS NO)
 endif()
 if(K_BUILD_EMBEDDED_SMOKE)
     include(tests/embedded/smoke.cmake)
 endif()
 include(CMakePackageConfigHelpers)
-install(TARGETS manipulator_kinematics EXPORT manipulatorTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(
+    TARGETS manipulator_kinematics
+    EXPORT manipulatorTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/manipulator DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/manipulator/config.h" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/manipulator)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/manipulator/config.h"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/manipulator)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION ${CMAKE_INSTALL_DOCDIR})
 endif()
-install(EXPORT manipulatorTargets NAMESPACE manipulator:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
-configure_package_config_file(cmake/manipulatorConfig.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
+install(
+    EXPORT manipulatorTargets
+    NAMESPACE manipulator::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
+configure_package_config_file(
+    cmake/manipulatorConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
 if(PROJECT_VERSION_MAJOR EQUAL 0)
     set(K_PACKAGE_COMPATIBILITY SameMinorVersion)
 else()
     set(K_PACKAGE_COMPATIBILITY SameMajorVersion)
 endif()
-write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION} COMPATIBILITY ${K_PACKAGE_COMPATIBILITY})
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
+write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY ${K_PACKAGE_COMPATIBILITY})
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/manipulatorConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/manipulator)

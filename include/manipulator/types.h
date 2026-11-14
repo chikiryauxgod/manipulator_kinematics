@@ -7,8 +7,7 @@ typedef float k_real;
 #else
 typedef double k_real;
 #endif
-typedef enum
-{
+typedef enum {
     K_OK = 0,
     K_INVALID_ARGUMENT = 1,
     K_INVALID_MODEL = 2,
@@ -26,60 +25,41 @@ typedef enum
     K_STALLED = 14
 } k_status;
 
-typedef enum
-{
-    K_REVOLUTE = 0,
-    K_PRISMATIC = 1
-} k_joint_type;
+typedef enum { K_REVOLUTE = 0, K_PRISMATIC = 1 } k_joint_type;
 
-typedef struct
-{
+typedef struct {
     k_real m[4][4];
 } k_transform;
 
-typedef struct
-{
+typedef struct {
     k_joint_type type;
     k_real a, alpha, d_offset, theta_offset;
 } k_dh_joint;
 
-typedef enum
-{
-    K_UNBOUNDED = 0,
-    K_BOUNDED = 1
-} k_limit_mode;
+typedef enum { K_UNBOUNDED = 0, K_BOUNDED = 1 } k_limit_mode;
 
-typedef struct
-{
+typedef struct {
     k_limit_mode mode;
     k_real min, max;
 } k_joint_limits;
 
-typedef struct
-{
+typedef struct {
     k_dh_joint geometry;
     k_joint_limits limits;
     unsigned configured;
 } k_joint_config;
 
-typedef enum
-{
-    K_EMPTY = 0,
-    K_CONFIGURING = 1,
-    K_READY = 2
-} k_model_state;
+typedef enum { K_EMPTY = 0, K_CONFIGURING = 1, K_READY = 2 } k_model_state;
 
-typedef struct
-{
-    k_joint_config *joints;
+typedef struct {
+    k_joint_config* joints;
     size_t joint_count, storage_capacity;
     k_transform world_base, last_tool;
     k_model_state state;
     unsigned configured;
 } k_model;
 
-typedef struct
-{
+typedef struct {
     k_real x, y, z;
 } k_vec3;
 #endif

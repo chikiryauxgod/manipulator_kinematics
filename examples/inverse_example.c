@@ -2,8 +2,7 @@
 #include <manipulator/transform.h>
 #include <stdio.h>
 
-int main(void)
-{
+int main(void) {
     const k_real pi = (k_real)3.14159265358979323846;
     const k_dh_joint geometry[3] = {{K_REVOLUTE, 0, pi / 2, (k_real)0.1, 0},
                                     {K_REVOLUTE, (k_real)0.3, 0, 0, 0},
@@ -14,8 +13,7 @@ int main(void)
     k_transform unit;
     const k_joint_limits limits = {K_BOUNDED, -pi, pi};
     k_status status = k_model_begin(&model, storage, 3, 3);
-    for (size_t i = 0; status == K_OK && i < 3; ++i)
-    {
+    for (size_t i = 0; status == K_OK && i < 3; ++i) {
         status = k_model_set_joint(&model, i, &geometry[i]);
         if (status == K_OK)
             status = k_model_set_limits(&model, i, &limits);
@@ -45,8 +43,7 @@ int main(void)
         status = k_inverse_position(&model, &target, initial_joint_positions, 3, &options,
                                     workspace, sizeof(workspace) / sizeof(workspace[0]),
                                     joint_positions, 3, &report);
-    if (status != K_OK)
-    {
+    if (status != K_OK) {
         fprintf(stderr, "IK failed: %d\n", (int)status);
         return 1;
     }
