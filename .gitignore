@@ -4,3 +4,28 @@
 __pycache__/
 *.pyc
 *.egg-info/
+
+# Generated CMake files and compiler output.
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+Testing/
+compile_commands.json
+*.o
+*.a
+*.so
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+*.su
+
+# Local test results and editor files.
+.coverage
+.coverage.*
+htmlcov/
+*.swp
+*.swo
+*~
+.DS_Store

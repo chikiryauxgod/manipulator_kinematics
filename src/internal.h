@@ -39,10 +39,8 @@ _Static_assert(sizeof(double) == 8 && DBL_MANT_DIG == 53 && DBL_MAX_EXP == 1024 
 #define K_ABS fabs
 #endif
 
-static inline int k_checked_add(k_real a, k_real b, k_real *out)
-{
-    if ((b > 0 && a > K_MAX - b) || (b < 0 && a < -K_MAX - b))
-    {
+static inline int k_checked_add(k_real a, k_real b, k_real* out) {
+    if ((b > 0 && a > K_MAX - b) || (b < 0 && a < -K_MAX - b)) {
         return 0;
     }
     *out = a + b;
@@ -50,11 +48,9 @@ static inline int k_checked_add(k_real a, k_real b, k_real *out)
     return isfinite(*out);
 }
 
-static inline int k_checked_mul(k_real a, k_real b, k_real *out)
-{
+static inline int k_checked_mul(k_real a, k_real b, k_real* out) {
     k_real aa = K_ABS(a), ab = K_ABS(b);
-    if (aa > 1 && ab > K_MAX / aa)
-    {
+    if (aa > 1 && ab > K_MAX / aa) {
         return 0;
     }
     *out = a * b;
@@ -62,19 +58,18 @@ static inline int k_checked_mul(k_real a, k_real b, k_real *out)
     return isfinite(*out);
 }
 
-static inline int k_count_valid(size_t n)
-{
+static inline int k_count_valid(size_t n) {
     return n > 0 && n <= SIZE_MAX / sizeof(k_dh_joint) && n <= SIZE_MAX / sizeof(k_real) &&
            n <= SIZE_MAX - 2 && n + 2 <= SIZE_MAX / sizeof(k_transform);
 }
 
-k_status k_internal_compose(const k_transform *a, const k_transform *b, k_transform *out);
-k_status k_internal_positions_validate(const k_model *model, const k_real *joint_positions,
+k_status k_internal_compose(const k_transform* a, const k_transform* b, k_transform* out);
+k_status k_internal_positions_validate(const k_model* model, const k_real* joint_positions,
                                        size_t count);
-k_status k_internal_walk(const k_model *model, const k_real *joint_positions, k_transform *tool,
-                         k_transform *frames);
-k_status k_internal_dh(const k_dh_joint *joint, k_real q, k_transform *out);
+k_status k_internal_walk(const k_model* model, const k_real* joint_positions, k_transform* tool,
+                         k_transform* frames);
+k_status k_internal_dh(const k_dh_joint* joint, k_real q, k_transform* out);
 k_status k_internal_linear3(k_real matrix[3][3], const k_real rhs[3], k_real result[3]);
-k_status k_internal_jacobian(const k_model *model, const k_real *joint_positions,
-                             const k_transform *tool, k_real *columns);
+k_status k_internal_jacobian(const k_model* model, const k_real* joint_positions,
+                             const k_transform* tool, k_real* columns);
 #endif

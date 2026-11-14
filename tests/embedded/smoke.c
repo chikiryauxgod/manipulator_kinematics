@@ -14,28 +14,25 @@ static k_real ik_workspace[384], ik_output[64], scales[64], steps[64];
 static k_transform frames[66], work[66];
 extern unsigned char _stack_bottom, _stack_top;
 
-static void host_write(const char *text)
-{
+static void host_write(const char* text) {
     register uintptr_t op __asm__("r0") = 4;
     register uintptr_t arg __asm__("r1") = (uintptr_t)text;
     __asm__ volatile("bkpt 0xab" : "+r"(op), "+r"(arg) : : "memory");
 }
-void smoke_exit(int code)
-{
+
+void smoke_exit(int code) {
     const uint32_t args[2] = {0x20026u, (uint32_t)code};
     register uintptr_t op __asm__("r0") = 0x20;
     register uintptr_t arg __asm__("r1") = (uintptr_t)args;
     __asm__ volatile("bkpt 0xab" : "+r"(op), "+r"(arg) : : "memory");
-    for (;;)
-    {
+    for (;;) {
     }
 }
-static void write_number(unsigned value)
-{
+
+static void write_number(unsigned value) {
     char buffer[16], reverse[12];
     unsigned n = 0;
-    do
-    {
+    do {
         reverse[n++] = (char)('0' + value % 10);
         value /= 10;
     } while (value);
@@ -44,27 +41,27 @@ static void write_number(unsigned value)
     buffer[n] = '\0';
     host_write(buffer);
 }
-static void fill_stack(void)
-{
+
+static void fill_stack(void) {
     uintptr_t sp;
     __asm__ volatile("mrs %0, msp" : "=r"(sp));
-    for (volatile unsigned char *p = &_stack_bottom; (uintptr_t)p < sp - 256; ++p)
+    for (volatile unsigned char* p = &_stack_bottom; (uintptr_t)p < sp - 256; ++p)
         *p = 0xa5;
 }
-static unsigned stack_used(void)
-{
-    volatile unsigned char *p = &_stack_bottom;
+
+static unsigned stack_used(void) {
+    volatile unsigned char* p = &_stack_bottom;
     while (p < &_stack_top && *p == 0xa5)
         ++p;
     return (unsigned)(&_stack_top - p);
 }
-static int near(k_real a, k_real b)
-{
+
+static int near(k_real a, k_real b) {
     k_real error = a - b;
     return error < (k_real)2e-5 && error > -(k_real)2e-5;
 }
-int main(void)
-{
+
+int main(void) {
     k_model model;
     if (k_transform_identity(&unit) != K_OK)
         return 20;
@@ -119,14 +116,12 @@ int main(void)
         return 21;
     if (k_forward(&model, q, 1, &out) != K_NUMERIC_ERROR)
         return 9;
-    for (unsigned i = 0; i < 64; ++i)
-    {
+    for (unsigned i = 0; i < 64; ++i) {
         joints[i] = (k_dh_joint){K_REVOLUTE, (k_real)0.1, 0, 0, 0};
         q[i] = 0;
     }
     const unsigned sizes[] = {3, 6, 64};
-    for (unsigned k = 0; k < 3; ++k)
-    {
+    for (unsigned k = 0; k < 3; ++k) {
         unsigned n = sizes[k];
         if (test_setup(&model, storage, 64, joints, n, &unit, &unit) != K_OK)
             return 10;
@@ -142,15 +137,13 @@ int main(void)
         write_number(used);
         host_write("\n");
     }
-    for (unsigned i = 0; i < 64; ++i)
-    {
+    for (unsigned i = 0; i < 64; ++i) {
         joints[i] = (k_dh_joint){K_PRISMATIC, 0, 0, 0, 0};
         q[i] = 0;
         scales[i] = 1;
         steps[i] = (k_real)0.1;
     }
-    for (unsigned k = 0; k < 3; ++k)
-    {
+    for (unsigned k = 0; k < 3; ++k) {
         unsigned n = sizes[k];
         if (test_setup(&model, storage, 64, joints, n, &unit, &unit) != K_OK)
             return 22;

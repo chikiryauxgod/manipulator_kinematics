@@ -1,16 +1,13 @@
 #include <manipulator/inverse.h>
 #include "inverse_internal.h"
 
-static int normalize_column(k_real value, k_real weight, k_real length, k_real *out)
-{
-    if (value == 0)
-    {
+static int normalize_column(k_real value, k_real weight, k_real length, k_real* out) {
+    if (value == 0) {
         *out = 0;
         return 1;
     }
     k_real product;
-    if (k_checked_mul(value, weight, &product) && fpclassify(product) == FP_NORMAL)
-    {
+    if (k_checked_mul(value, weight, &product) && fpclassify(product) == FP_NORMAL) {
         *out = product / length;
         if (isfinite(*out))
             return 1;
@@ -24,16 +21,13 @@ static int normalize_column(k_real value, k_real weight, k_real length, k_real *
     return isfinite(*out);
 }
 
-static int normalize_error(k_real value, k_real length, k_real scale, k_real *out)
-{
-    if (value == 0)
-    {
+static int normalize_error(k_real value, k_real length, k_real scale, k_real* out) {
+    if (value == 0) {
         *out = 0;
         return 1;
     }
     k_real quotient = value / length;
-    if (isfinite(quotient) && fpclassify(quotient) == FP_NORMAL)
-    {
+    if (isfinite(quotient) && fpclassify(quotient) == FP_NORMAL) {
         *out = quotient / scale;
         if (isfinite(*out))
             return 1;
@@ -47,15 +41,13 @@ static int normalize_error(k_real value, k_real length, k_real scale, k_real *ou
     return isfinite(*out);
 }
 
-k_status k_internal_dls(k_real *columns, size_t count, const k_real error[3],
-                        const k_ik_options *options, k_real *step, k_real gradient_rhs[3],
-                        k_real *effective_damping)
-{
+k_status k_internal_dls(k_real* columns, size_t count, const k_real error[3],
+                        const k_ik_options* options, k_real* step, k_real gradient_rhs[3],
+                        k_real* effective_damping) {
     k_real scale = options->damping;
     for (size_t i = 0; i < count; ++i)
-        for (size_t r = 0; r < 3; ++r)
-        {
-            k_real *value = columns + 3 * i + r;
+        for (size_t r = 0; r < 3; ++r) {
+            k_real* value = columns + 3 * i + r;
             if (!normalize_column(*value, options->joint_scales[i], options->length_scale, value))
                 return K_NUMERIC_ERROR;
             if (K_ABS(*value) > scale)
@@ -69,21 +61,18 @@ k_status k_internal_dls(k_real *columns, size_t count, const k_real error[3],
     if (!k_checked_mul(scale, K_SQRT(regularization), effective_damping))
         return K_NUMERIC_ERROR;
     k_real matrix[3][3] = {{0}}, rhs[3], result[3];
-    for (size_t r = 0; r < 3; ++r)
-    {
+    for (size_t r = 0; r < 3; ++r) {
         if (!normalize_error(error[r], options->length_scale, scale, &rhs[r]))
             return K_NUMERIC_ERROR;
         gradient_rhs[r] = rhs[r];
         matrix[r][r] = regularization;
     }
-    for (size_t i = 0; i < count; ++i)
-    {
-        k_real *column = columns + 3 * i;
+    for (size_t i = 0; i < count; ++i) {
+        k_real* column = columns + 3 * i;
         for (size_t r = 0; r < 3; ++r)
             column[r] /= scale;
         for (size_t r = 0; r < 3; ++r)
-            for (size_t c = 0; c < 3; ++c)
-            {
+            for (size_t c = 0; c < 3; ++c) {
                 k_real product;
                 if (!k_checked_mul(column[r], column[c], &product) ||
                     !k_checked_add(matrix[r][c], product, &matrix[r][c]))
@@ -96,15 +85,12 @@ k_status k_internal_dls(k_real *columns, size_t count, const k_real error[3],
     return k_internal_direction(columns, count, result, options, step);
 }
 
-k_status k_internal_direction(const k_real *columns, size_t count, const k_real rhs[3],
-                              const k_ik_options *options, k_real *step)
-{
+k_status k_internal_direction(const k_real* columns, size_t count, const k_real rhs[3],
+                              const k_ik_options* options, k_real* step) {
     k_real divisor = 1;
-    for (size_t i = 0; i < count; ++i)
-    {
+    for (size_t i = 0; i < count; ++i) {
         k_real value = 0;
-        for (size_t r = 0; r < 3; ++r)
-        {
+        for (size_t r = 0; r < 3; ++r) {
             k_real product;
             if (!k_checked_mul(columns[3 * i + r], rhs[r], &product) ||
                 !k_checked_add(value, product, &value))

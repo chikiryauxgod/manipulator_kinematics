@@ -2,8 +2,7 @@
 #include <string.h>
 #include "inverse_internal.h"
 
-k_status k_ik_workspace_size(size_t count, size_t *elements)
-{
+k_status k_ik_workspace_size(size_t count, size_t* elements) {
     if (!elements)
         return K_INVALID_ARGUMENT;
     if (!k_count_valid(count) || count > SIZE_MAX / 6 / sizeof(k_real))
@@ -12,8 +11,7 @@ k_status k_ik_workspace_size(size_t count, size_t *elements)
     return K_OK;
 }
 
-static k_status options_valid(const k_ik_options *options, size_t count)
-{
+static k_status options_valid(const k_ik_options* options, size_t count) {
     if (!options || !options->joint_scales || !options->max_joint_steps)
         return K_INVALID_ARGUMENT;
     if (options->joint_count != count)
@@ -33,9 +31,8 @@ static k_status options_valid(const k_ik_options *options, size_t count)
     return K_OK;
 }
 
-static k_status position_error(const k_vec3 *target, const k_transform *tool, k_real error[3],
-                               k_real *residual)
-{
+static k_status position_error(const k_vec3* target, const k_transform* tool, k_real error[3],
+                               k_real* residual) {
     const k_real values[3] = {target->x, target->y, target->z};
     for (size_t r = 0; r < 3; ++r)
         if (!k_checked_add(values[r], -tool->m[r][3], &error[r]))
@@ -44,35 +41,30 @@ static k_status position_error(const k_vec3 *target, const k_transform *tool, k_
     return isfinite(*residual) ? K_OK : K_NUMERIC_ERROR;
 }
 
-static k_status evaluate(const k_model *model, const k_real *positions, const k_vec3 *target,
-                         k_transform *tool, k_real error[3], k_real *residual, k_ik_report *report)
-{
+static k_status evaluate(const k_model* model, const k_real* positions, const k_vec3* target,
+                         k_transform* tool, k_real error[3], k_real* residual,
+                         k_ik_report* report) {
     ++report->fk_evaluations;
     k_status status = k_internal_walk(model, positions, tool, NULL);
     return status == K_OK ? position_error(target, tool, error, residual) : status;
 }
 
-static k_status search(const k_model *model, const k_vec3 *target, const k_ik_options *options,
-                       const k_real *current, const k_real *step, k_real *candidate,
-                       k_transform *tool, k_real error[3], k_real *residual, k_ik_report *report,
-                       int *had_valid_trial)
-{
+static k_status search(const k_model* model, const k_vec3* target, const k_ik_options* options,
+                       const k_real* current, const k_real* step, k_real* candidate,
+                       k_transform* tool, k_real error[3], k_real* residual, k_ik_report* report,
+                       int* had_valid_trial) {
     k_real alpha = 1;
-    for (size_t trial = 0; trial < options->max_backtracking_trials && alpha > 0; ++trial)
-    {
+    for (size_t trial = 0; trial < options->max_backtracking_trials && alpha > 0; ++trial) {
         int changed = 0, valid = 1;
-        for (size_t i = 0; i < model->joint_count; ++i)
-        {
+        for (size_t i = 0; i < model->joint_count; ++i) {
             k_real increment;
             if (!k_checked_mul(alpha, step[i], &increment) ||
-                !k_checked_add(current[i], increment, &candidate[i]))
-            {
+                !k_checked_add(current[i], increment, &candidate[i])) {
                 valid = 0;
                 break;
             }
-            const k_joint_limits *limits = &model->joints[i].limits;
-            if (limits->mode == K_BOUNDED)
-            {
+            const k_joint_limits* limits = &model->joints[i].limits;
+            if (limits->mode == K_BOUNDED) {
                 if (candidate[i] < limits->min)
                     candidate[i] = limits->min;
                 if (candidate[i] > limits->max)
@@ -81,22 +73,18 @@ static k_status search(const k_model *model, const k_vec3 *target, const k_ik_op
             if (candidate[i] != current[i])
                 changed = 1;
         }
-        if (valid && !changed)
-        {
+        if (valid && !changed) {
             *had_valid_trial = 1;
             return K_STALLED;
         }
-        if (valid)
-        {
+        if (valid) {
             k_transform trial_tool;
             k_real trial_error[3], trial_residual;
             k_status status = evaluate(model, candidate, target, &trial_tool, trial_error,
                                        &trial_residual, report);
-            if (status == K_OK)
-            {
+            if (status == K_OK) {
                 *had_valid_trial = 1;
-                if (trial_residual < *residual || trial_residual <= options->position_tolerance)
-                {
+                if (trial_residual < *residual || trial_residual <= options->position_tolerance) {
                     *tool = trial_tool;
                     *residual = trial_residual;
                     for (size_t r = 0; r < 3; ++r)
@@ -110,11 +98,10 @@ static k_status search(const k_model *model, const k_vec3 *target, const k_ik_op
     return K_STALLED;
 }
 
-static k_status solve(const k_model *model, const k_vec3 *target,
-                      const k_real *initial_joint_positions, size_t count,
-                      const k_ik_options *options, k_real *workspace, size_t capacity,
-                      k_real *joint_positions, size_t output_capacity, k_ik_report *report)
-{
+static k_status solve(const k_model* model, const k_vec3* target,
+                      const k_real* initial_joint_positions, size_t count,
+                      const k_ik_options* options, k_real* workspace, size_t capacity,
+                      k_real* joint_positions, size_t output_capacity, k_ik_report* report) {
     if (!target || !workspace || !joint_positions)
         return K_INVALID_ARGUMENT;
     k_status status = k_internal_positions_validate(model, initial_joint_positions, count);
@@ -131,10 +118,10 @@ static k_status solve(const k_model *model, const k_vec3 *target,
         return status;
     if (capacity < needed || output_capacity < count)
         return K_BUFFER_TOO_SMALL;
-    k_real *current = workspace;
-    k_real *candidate = workspace + count;
-    k_real *step = workspace + 2 * count;
-    k_real *columns = workspace + 3 * count;
+    k_real* current = workspace;
+    k_real* candidate = workspace + count;
+    k_real* step = workspace + 2 * count;
+    k_real* columns = workspace + 3 * count;
     memcpy(current, initial_joint_positions, count * sizeof(*current));
     k_transform tool;
     k_real error[3], residual;
@@ -143,8 +130,7 @@ static k_status solve(const k_model *model, const k_vec3 *target,
         return status;
     report->residual = residual;
     report->residual_valid = 1;
-    for (size_t attempt = 0; residual > options->position_tolerance; ++attempt)
-    {
+    for (size_t attempt = 0; residual > options->position_tolerance; ++attempt) {
         if (attempt == options->max_iterations)
             return K_NO_CONVERGENCE;
         ++report->iteration_attempts;
@@ -160,8 +146,7 @@ static k_status solve(const k_model *model, const k_vec3 *target,
         int had_valid_trial = 0;
         status = search(model, target, options, current, step, candidate, &tool, error, &residual,
                         report, &had_valid_trial);
-        if (status != K_OK)
-        {
+        if (status != K_OK) {
             status = k_internal_direction(columns, count, gradient_rhs, options, step);
             if (status != K_OK)
                 return status;
@@ -178,11 +163,10 @@ static k_status solve(const k_model *model, const k_vec3 *target,
     return K_OK;
 }
 
-k_status k_inverse_position(const k_model *model, const k_vec3 *target,
-                            const k_real *initial_joint_positions, size_t count,
-                            const k_ik_options *options, k_real *workspace, size_t capacity,
-                            k_real *joint_positions, size_t output_capacity, k_ik_report *report)
-{
+k_status k_inverse_position(const k_model* model, const k_vec3* target,
+                            const k_real* initial_joint_positions, size_t count,
+                            const k_ik_options* options, k_real* workspace, size_t capacity,
+                            k_real* joint_positions, size_t output_capacity, k_ik_report* report) {
     k_ik_report result = {0};
     k_status status = solve(model, target, initial_joint_positions, count, options, workspace,
                             capacity, joint_positions, output_capacity, &result);

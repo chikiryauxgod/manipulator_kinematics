@@ -1,8 +1,20 @@
 # Manipulator Kinematics
 
-A portable C11 library for forward kinematics of serial manipulators.
-Configurable joint count, float/double support, and no dynamic memory allocation.
+[![CI](https://github.com/chikiryauxgod/manipulator_kinematics/actions/workflows/ci.yml/badge.svg)](https://github.com/chikiryauxgod/manipulator_kinematics/actions/workflows/ci.yml)
 
-[Build](docs/building.md) · [API](docs/c-api.md) · [Validation](docs/validation.md)
+Библиотека C11 для прямой и позиционной обратной кинематики последовательных манипуляторов.
+Поддерживает DH-модель, ограничения суставов и вычисления в float или double без динамического
+выделения памяти. В проекте есть CMake-сборка, примеры и тесты.
 
-[MIT License](LICENSE) · [Third-party materials](docs/third-party.md)
+## Оглавление
+
+- [Публичный API](include/README.md)
+- [Реализация](src/README.md)
+- [Примеры](examples/README.md)
+- [Тесты](tests/README.md)
+- [Сборка и документация](docs/README.md)
+- [CI](ci/README.md)
+
+[Лицензия MIT](LICENSE)
+
+[Прошивка STM32](https://github.com/chikiryauxgod/manipulator_core)

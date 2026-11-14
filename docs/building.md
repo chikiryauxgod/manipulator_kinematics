@@ -8,9 +8,12 @@
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DK_BUILD_EXAMPLES=ON
 cmake --build build
 ./build/manipulator_example
+./build/manipulator_inverse_example
 ```
 
 Пример 3R печатает положение инструмента примерно `(0.3, 0, 0.3)` м. [Исходный пример](../examples/forward_example.c) показывает и позу, и получение кадров с заранее выделенными буферами.
+
+Пример позиционной IK — [inverse_example.c](../examples/inverse_example.c): задаёт модель и ограничения, выделяет workspace и ищет координаты для точки `(0.3, 0, 0.3)` м.
 
 ## Интеграция
 
@@ -28,7 +31,7 @@ cmake --install build --prefix "$PWD/install"
 ```
 
 ```cmake
-find_package(manipulator 0.1 CONFIG REQUIRED)
+find_package(manipulator 0.2 CONFIG REQUIRED)
 target_link_libraries(your_application PRIVATE manipulator::kinematics)
 ```
 

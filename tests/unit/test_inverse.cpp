@@ -3,15 +3,13 @@
 #include <array>
 #include <cstdint>
 
-extern "C" k_status k_internal_jacobian(const k_model *, const k_real *, const k_transform *,
-                                        k_real *);
+extern "C" k_status k_internal_jacobian(const k_model*, const k_real*, const k_transform*, k_real*);
 extern "C" k_status k_internal_linear3(k_real[3][3], const k_real[3], k_real[3]);
-extern "C" k_status k_internal_dls(k_real *, size_t, const k_real[3], const k_ik_options *,
-                                   k_real *, k_real[3], k_real *);
+extern "C" k_status k_internal_dls(k_real*, size_t, const k_real[3], const k_ik_options*, k_real*,
+                                   k_real[3], k_real*);
 
-static k_ik_options options(const std::vector<k_real> &scales, const std::vector<k_real> &steps,
-                            size_t iterations = 500)
-{
+static k_ik_options options(const std::vector<k_real>& scales, const std::vector<k_real>& steps,
+                            size_t iterations = 500) {
     return {iterations,
             16,
             (k_real)(K_USE_FLOAT ? 2e-5 : 1e-9),
@@ -22,11 +20,9 @@ static k_ik_options options(const std::vector<k_real> &scales, const std::vector
             scales.size()};
 }
 
-class InverseFamily : public testing::TestWithParam<int>
-{
-};
-TEST_P(InverseFamily, PositionOnlyIndependentGeometry)
-{
+class InverseFamily : public testing::TestWithParam<int> {};
+
+TEST_P(InverseFamily, PositionOnlyIndependentGeometry) {
     size_t n = (size_t)GetParam();
     std::vector<k_dh_joint> geometry(n, joint((k_real)0.15));
     geometry[0] = {K_REVOLUTE, 0, (k_real)(pi / 2), (k_real)0.1, 0};
@@ -35,8 +31,7 @@ TEST_P(InverseFamily, PositionOnlyIndependentGeometry)
     std::vector<k_real> scales(n, 1), steps(n, (k_real)0.2), initial(n, (k_real)0.15);
     auto config = options(scales, steps);
     long double angle = 0, radial = 0, height = .1;
-    for (size_t i = 1; i < n; ++i)
-    {
+    for (size_t i = 1; i < n; ++i) {
         angle += .2L + .02L * i;
         radial += (long double)geometry[i].a * std::cos(angle);
         height += (long double)geometry[i].a * std::sin(angle);
@@ -66,10 +61,10 @@ TEST_P(InverseFamily, PositionOnlyIndependentGeometry)
     EXPECT_NEAR(tool.m[1][3], target.y, config.position_tolerance);
     EXPECT_NEAR(tool.m[2][3], target.z, config.position_tolerance);
 }
+
 INSTANTIATE_TEST_SUITE_P(Sizes, InverseFamily, testing::Values(3, 4, 5, 6, 7, 16, 64));
 
-TEST(Inverse, FixedAndActiveLimitsDoNotDistortSearchDirection)
-{
+TEST(Inverse, FixedAndActiveLimitsDoNotDistortSearchDirection) {
     k_dh_joint geometry[] = {{K_REVOLUTE, 1, (k_real)(pi / 2), 0, (k_real)(pi / 2)},
                              {K_PRISMATIC, 0, (k_real)(pi / 2), 1, (k_real)(pi / 2)},
                              {K_PRISMATIC, 0, 0, -2, 0}};
@@ -78,8 +73,7 @@ TEST(Inverse, FixedAndActiveLimitsDoNotDistortSearchDirection)
     config.damping = (k_real).1;
     k_real initial[3] = {0, 0, 0}, work[18], output[3] = {91, 92, 93};
     k_vec3 target{(k_real)1.2, 0, 0};
-    for (auto limits : {k_joint_limits{K_BOUNDED, 0, 0}, k_joint_limits{K_BOUNDED, -1, 0}})
-    {
+    for (auto limits : {k_joint_limits{K_BOUNDED, 0, 0}, k_joint_limits{K_BOUNDED, -1, 0}}) {
         TestModel model;
         ASSERT_EQ(test_model_init(&model, geometry, 3), K_OK);
         model.joints[0].limits = limits;
@@ -92,8 +86,7 @@ TEST(Inverse, FixedAndActiveLimitsDoNotDistortSearchDirection)
         EXPECT_EQ(output[0], 91);
         EXPECT_EQ(output[1], 92);
         EXPECT_EQ(output[2], 93);
-        if (limits.min == limits.max)
-        {
+        if (limits.min == limits.max) {
             config.max_iterations = 500;
             ASSERT_EQ(k_inverse_position(&model, &target, initial, 3, &config, work, 18, output, 3,
                                          &report),
@@ -107,8 +100,7 @@ TEST(Inverse, FixedAndActiveLimitsDoNotDistortSearchDirection)
     }
 }
 
-TEST(Inverse, JacobianMatchesCentralDifferencesForMixedSpatialChain)
-{
+TEST(Inverse, JacobianMatchesCentralDifferencesForMixedSpatialChain) {
     k_dh_joint geometry[] = {{K_REVOLUTE, (k_real).3, (k_real).8, (k_real).1, (k_real).2},
                              {K_PRISMATIC, (k_real).2, (k_real)-.6, (k_real).1, (k_real).4},
                              {K_REVOLUTE, (k_real).1, (k_real).3, (k_real)-.2, (k_real)-.2}};
@@ -122,8 +114,7 @@ TEST(Inverse, JacobianMatchesCentralDifferencesForMixedSpatialChain)
     ASSERT_EQ(k_forward(&model, positions, 3, &tool), K_OK);
     ASSERT_EQ(k_internal_jacobian(&model, positions, &tool, columns), K_OK);
     const k_real h = K_USE_FLOAT ? (k_real).002 : (k_real)1e-5;
-    for (size_t i = 0; i < 3; ++i)
-    {
+    for (size_t i = 0; i < 3; ++i) {
         auto original = positions[i];
         k_transform plus{}, minus{};
         positions[i] = original + h;
@@ -137,8 +128,7 @@ TEST(Inverse, JacobianMatchesCentralDifferencesForMixedSpatialChain)
     }
 }
 
-TEST(Inverse, LinearSystemAndEffectiveRegularization)
-{
+TEST(Inverse, LinearSystemAndEffectiveRegularization) {
     k_real matrix[3][3] = {{4, 1, 1}, {1, 3, 0}, {1, 0, 2}}, rhs[3] = {9, 7, 7},
            out[3] = {91, 92, 93};
     ASSERT_EQ(k_internal_linear3(matrix, rhs, out), K_OK);
@@ -159,8 +149,7 @@ TEST(Inverse, LinearSystemAndEffectiveRegularization)
     EXPECT_GT(step[0], 0);
 }
 
-TEST(Inverse, ErrorsPreserveOutputAndReportLastAcceptedPosition)
-{
+TEST(Inverse, ErrorsPreserveOutputAndReportLastAcceptedPosition) {
     auto geometry = joint(1);
     TestModel model;
     ASSERT_EQ(test_model_init(&model, &geometry, 1), K_OK);
@@ -203,8 +192,7 @@ TEST(Inverse, ErrorsPreserveOutputAndReportLastAcceptedPosition)
     EXPECT_EQ(k_ik_workspace_size(1, nullptr), K_INVALID_ARGUMENT);
 }
 
-TEST(Inverse, AlreadyAtTargetLastIterationAndSeparateInstances)
-{
+TEST(Inverse, AlreadyAtTargetLastIterationAndSeparateInstances) {
     k_dh_joint geometry{K_PRISMATIC, 0, 0, 0, 0};
     TestModel first, second;
     ASSERT_EQ(test_model_init(&first, &geometry, 1), K_OK);
@@ -236,8 +224,7 @@ TEST(Inverse, AlreadyAtTargetLastIterationAndSeparateInstances)
         K_OK);
 }
 
-TEST(Inverse, InvalidArgumentsOptionsAndBoundsPreserveOutput)
-{
+TEST(Inverse, InvalidArgumentsOptionsAndBoundsPreserveOutput) {
     k_dh_joint geometry{K_PRISMATIC, 0, 0, 0, 0};
     TestModel model;
     ASSERT_EQ(test_model_init(&model, &geometry, 1), K_OK);
@@ -246,8 +233,8 @@ TEST(Inverse, InvalidArgumentsOptionsAndBoundsPreserveOutput)
     k_real initial = 0, work[6], output = 91;
     k_vec3 target{0, 0, 1};
     k_ik_report report{};
-    auto call = [&](const k_model *m, const k_vec3 *t, const k_real *seed, size_t count,
-                    const k_ik_options *o, k_real *w, size_t capacity, k_real *out,
+    auto call = [&](const k_model* m, const k_vec3* t, const k_real* seed, size_t count,
+                    const k_ik_options* o, k_real* w, size_t capacity, k_real* out,
                     size_t output_capacity) {
         return k_inverse_position(m, t, seed, count, o, w, capacity, out, output_capacity, &report);
     };
@@ -263,8 +250,7 @@ TEST(Inverse, InvalidArgumentsOptionsAndBoundsPreserveOutput)
     EXPECT_EQ(call(&model, &target, &initial, 1, &config, work, 6, &output, 0), K_BUFFER_TOO_SMALL);
     auto valid = config;
     for (k_real value : {(k_real)0, (k_real)-1, std::numeric_limits<k_real>::infinity(),
-                         std::numeric_limits<k_real>::quiet_NaN()})
-    {
+                         std::numeric_limits<k_real>::quiet_NaN()}) {
         config.position_tolerance = value;
         EXPECT_EQ(call(&model, &target, &initial, 1, &config, work, 6, &output, 1),
                   K_INVALID_OPTIONS);
@@ -298,8 +284,7 @@ TEST(Inverse, InvalidArgumentsOptionsAndBoundsPreserveOutput)
     EXPECT_FALSE(report.residual_valid);
 }
 
-TEST(Inverse, StepLimitsDoNotChangeRegularizedDirection)
-{
+TEST(Inverse, StepLimitsDoNotChangeRegularizedDirection) {
     std::vector<k_real> scales{1, 2}, limits{100, 100};
     auto config = options(scales, limits);
     k_real columns[6] = {1, 1, 0, 0, 1, 1}, copy[6], error[3] = {1, 2, 3};
@@ -312,8 +297,7 @@ TEST(Inverse, StepLimitsDoNotChangeRegularizedDirection)
     EXPECT_LE(std::fabs(second[0]), limits[0]);
 }
 
-TEST(Inverse, SmallLengthScaleKeepsRegularizationRepresentable)
-{
+TEST(Inverse, SmallLengthScaleKeepsRegularizationRepresentable) {
     k_dh_joint geometry{K_PRISMATIC, 0, 0, 0, 0};
     TestModel model;
     ASSERT_EQ(test_model_init(&model, &geometry, 1), K_OK);
@@ -330,22 +314,21 @@ TEST(Inverse, SmallLengthScaleKeepsRegularizationRepresentable)
     EXPECT_LE(report.residual, config.position_tolerance);
 }
 
-TEST(Inverse, NormalizationAvoidsIntermediateOverflowAndUnderflow)
-{
+TEST(Inverse, NormalizationAvoidsIntermediateOverflowAndUnderflow) {
     const k_real largest = std::numeric_limits<k_real>::max();
     const k_real smallest = std::numeric_limits<k_real>::min();
-    struct Case
-    {
+
+    struct Case {
         k_real column, joint_scale, length_scale, damping, error, expected;
     };
+
     const Case cases[] = {
         {4, largest * (k_real).5, largest * (k_real).5, (k_real).1, 2, (k_real)(8.0 / 16.01)},
         {1, 1, smallest, (k_real).005, 8, 8},
         {smallest, smallest, smallest, smallest, smallest, (k_real).5},
         {smallest, largest * (k_real).5, largest * (k_real).5, smallest, smallest, (k_real).5},
         {-4, largest * (k_real).5, largest * (k_real).5, (k_real).1, 2, (k_real)(-8.0 / 16.01)}};
-    for (const auto &item : cases)
-    {
+    for (const auto& item : cases) {
         std::vector<k_real> scales{item.joint_scale}, steps{16};
         auto config = options(scales, steps);
         config.length_scale = item.length_scale;
@@ -359,8 +342,7 @@ TEST(Inverse, NormalizationAvoidsIntermediateOverflowAndUnderflow)
     }
 }
 
-TEST(Inverse, UnrepresentableNormalizationPreservesOutput)
-{
+TEST(Inverse, UnrepresentableNormalizationPreservesOutput) {
     k_dh_joint geometry{K_PRISMATIC, 0, 0, 0, 0};
     TestModel model;
     ASSERT_EQ(test_model_init(&model, &geometry, 1), K_OK);
@@ -380,8 +362,7 @@ TEST(Inverse, UnrepresentableNormalizationPreservesOutput)
     EXPECT_EQ(report.accepted_steps, 0u);
 }
 
-TEST(Inverse, NumericCandidateFailuresUseSmallerTrialsAndPreserveDiagnostics)
-{
+TEST(Inverse, NumericCandidateFailuresUseSmallerTrialsAndPreserveDiagnostics) {
     const k_real largest = std::numeric_limits<k_real>::max();
     k_dh_joint geometry{K_REVOLUTE, largest * (k_real).5, 0, 0, 0};
     TestModel model;
@@ -391,8 +372,7 @@ TEST(Inverse, NumericCandidateFailuresUseSmallerTrialsAndPreserveDiagnostics)
     auto config = options(scales, limits, 1);
     config.length_scale = largest;
     config.max_backtracking_trials = 8;
-    for (k_real initial : {(k_real)1.2, (k_real)(pi / 3 + 1e-6L)})
-    {
+    for (k_real initial : {(k_real)1.2, (k_real)(pi / 3 + 1e-6L)}) {
         k_transform initial_tool{};
         ASSERT_EQ(k_forward(&model, &initial, 1, &initial_tool), K_OK);
         k_vec3 target{initial_tool.m[0][3], -initial_tool.m[1][3], 0};
@@ -402,15 +382,12 @@ TEST(Inverse, NumericCandidateFailuresUseSmallerTrialsAndPreserveDiagnostics)
             k_inverse_position(&model, &target, &initial, 1, &config, work, 6, &output, 1, &report);
         EXPECT_EQ(output, 91);
         EXPECT_TRUE(report.residual_valid);
-        if (initial > (k_real)1.1)
-        {
+        if (initial > (k_real)1.1) {
             EXPECT_EQ(status, K_NO_CONVERGENCE);
             EXPECT_EQ(report.accepted_steps, 1u);
             EXPECT_GT(report.fk_evaluations, 2u);
             EXPECT_LT(report.residual, initial_tool.m[1][3] * 2);
-        }
-        else
-        {
+        } else {
             EXPECT_EQ(status, K_NUMERIC_ERROR);
             EXPECT_EQ(report.accepted_steps, 0u);
             EXPECT_EQ(report.fk_evaluations, 17u);
